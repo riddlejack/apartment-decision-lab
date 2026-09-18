@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "apartment-decision-lab"
+version = "0.1.0"
+description = "Local apartment research and household commute comparison, without an AI runtime"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{name = "Jack Riddle"}]
+dependencies = ["tzdata>=2025.1; sys_platform == 'win32'"]
+
+[project.scripts]
+housing = "housing.cli:main"
+
+[project.urls]
+Repository = "https://github.com/riddlejack/apartment-decision-lab"
+
+[tool.hatch.build.targets.wheel]
+packages = ["housing"]
+
+[dependency-groups]
+dev = ["pytest>=8.3,<9"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Apartment Decision Lab</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#comparison" aria-label="Apartment Decision Lab home">
+        <span class="brand-mark" aria-hidden="true">AD</span>
+        <span>Apartment Decision Lab</span>
+      </a>
+      <nav class="top-actions" aria-label="Workspace actions">
+        <button class="button button-quiet" id="refresh-button" type="button">Refresh</button>
+        <a class="button button-quiet" href="/api/export.csv" download>Export CSV</a>
+        <button class="button button-dark" id="open-import-button" type="button">Import JSON</button>
+      </nav>
+    </header>
+
+    <main class="page-shell">
+      <section class="page-heading" id="comparison">
+        <div>
+          <h1>Choose a home the household can live with.</h1>
+          <p>Compare asking rent, listing evidence, and real route results. Unknown fields stay unknown.</p>
+        </div>
+        <button class="button button-accent" id="route-button" type="button">Compute routes</button>
+      </section>
+
+      <div class="notice" id="notice" role="status" aria-live="polite" hidden></div>
+
+      <section class="comparison-panel" aria-labelledby="listings-heading">
+        <div class="section-bar">
+          <div>
+            <h2 id="listings-heading">Listings</h2>
+            <p id="result-summary">Loading workspace…</p>
+          </div>
+          <label class="field sort-field">
+            <span>Sort by</span>
+            <select id="sort-select">
+              <option value="rank">Commute rank</option>
+              <option value="rent">Lowest rent</option>
+              <option value="newest">Newest evidence</option>
+            </select>
+          </label>
+        </div>
+
+        <form class="filter-bar" id="filter-form">
+          <label class="field field-grow">
+            <span>Search</span>
+            <input id="search-input" type="search" placeholder="Address, title, or source">
+          </label>
+          <label class="field field-compact">
+            <span>Minimum rent</span>
+            <input id="min-rent-input" type="number" min="0" step="50" inputmode="numeric" placeholder="Any">
+          </label>
+          <label class="field field-compact">
+            <span>Maximum rent</span>
+            <input id="max-rent-input" type="number" min="0" step="50" inputmode="numeric" placeholder="Any">
+          </label>
+          <label class="field field-small">
+            <span>Bedrooms</span>
+            <select id="bedrooms-select">
+              <option value="">Any</option>
+              <option value="0">Studio+</option>
+              <option value="1">1+</option>
+              <option value="2">2+</option>
+              <option value="3">3+</option>
+              <option value="4">4+</option>
+            </select>
+          </label>
+          <label class="field field-small">
+            <span>Bathrooms</span>
+            <select id="bathrooms-select">
+              <option value="">Any</option>
+              <option value="1">1+</option>
+              <option value="1.5">1.5+</option>
+              <option value="2">2+</option>
+              <option value="3">3+</option>
+            </select>
+          </label>
+          <label class="field field-small">
+            <span>Source</span>
+            <select id="source-select">
+              <option value="">All</option>
+            </select>
+          </label>
+          <label class="check-field">
+            <input id="historical-input" type="checkbox" checked>
+            <span>Include historical</span>
+          </label>
+          <label class="check-field">
+            <input id="unknown-input" type="checkbox" checked>
+            <span>Keep unknown values</span>
+          </label>
+          <button class="text-button" id="clear-filters-button" type="button">Clear</button>
+        </form>
+
+        <div class="route-context" id="route-context" role="note" hidden></div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Home</th>
+                <th scope="col">Rent</th>
+                <th scope="col">Space</th>
+                <th scope="col">Evidence</th>
+                <th scope="col">Household commute</th>
+                <th scope="col"><span class="visually-hidden">Open listing</span></th>
+              </tr>
+            </thead>
+            <tbody id="listing-rows"></tbody>
+          </table>
+        </div>
+        <div class="empty-state" id="empty-state" hidden>
+          <h3>No listings to compare</h3>
+          <p id="empty-message">Import a JSON file or use the CLI to add listing evidence.</p>
+        </div>
+      </section>
+
+      <section class="workspace-grid" aria-label="Workspace setup">
+        <article class="setup-panel setup-panel-wide">
+          <div class="panel-heading">
+            <div>
+              <h2>Household &amp; destinations</h2>
+              <p>Set each person’s destinations, weekly frequency, allowed modes, and commute cap.</p>
+            </div>
+            <button class="button button-quiet" id="add-person-button" type="button">Add person</button>
+          </div>
+
+          <form id="config-form">
+            <div class="location-grid">
+              <label class="field">
+                <span>City</span>
+                <input id="city-input" name="city" autocomplete="address-level2" placeholder="Your search city">
+              </label>
+              <label class="field">
+                <span>Timezone</span>
+                <input id="timezone-input" name="timezone" placeholder="America/Chicago">
+              </label>
+              <label class="field">
+                <span>Currency</span>
+                <input id="currency-input" name="currency" maxlength="3" value="USD" readonly>
+              </label>
+            </div>
+
+            <div class="people-list" id="people-list"></div>
+            <div class="panel-footer">
+              <span class="form-status" id="config-status" role="status" aria-live="polite"></span>
+              <button class="button button-dark" id="save-config-button" type="submit">Save household</button>
+            </div>
+          </form>
+        </article>
+
+        <aside class="setup-stack">
+          <article class="setup-panel">
+            <h2>Routing engine</h2>
+            <p>Route calculation is optional and can take time. It is unavailable until an OSM and GTFS engine is configured.</p>
+            <p class="guidance"><a href="https://github.com/riddlejack/apartment-decision-lab/blob/main/docs/ROUTING.md" target="_blank" rel="noopener noreferrer">Open the routing setup guide</a> for engine setup, dates, feeds, and resource limits. Drive results are free-flow estimates.</p>
+            <details>
+              <summary>Advanced routing JSON</summary>
+              <label class="field json-field">
+                <span>Routing configuration</span>
+                <textarea id="routing-json" rows="10" spellcheck="false" aria-describedby="routing-help"></textarea>
+              </label>
+              <p class="field-help" id="routing-help">Saved as the config’s <code>routing</code> object. Invalid JSON will not be submitted.</p>
+            </details>
+          </article>
+
+          <article class="setup-panel import-panel" id="import-panel" tabindex="-1">
+            <h2>Import listings</h2>
+            <p>Paste a JSON array or an object containing a <code>listings</code> array. Existing evidence rules still apply.</p>
+            <label class="field">
+              <span>Choose a JSON file</span>
+              <input id="json-file-input" type="file" accept="application/json,.json">
+            </label>
+            <label class="field json-field">
+              <span>JSON payload</span>
+              <textarea id="import-json" rows="8" spellcheck="false" placeholder='[{"id":"…","source":"…"}]'></textarea>
+            </label>
+            <div class="panel-footer">
+              <span class="form-status" id="import-status" role="status" aria-live="polite"></span>
+              <button class="button button-accent" id="import-button" type="button">Import listings</button>
+            </div>
+            <div class="cli-note">
+              <strong>CSV uses the CLI</strong>
+              <code>housing import path/to/listings.csv</code>
+            </div>
+          </article>
+        </aside>
+      </section>
+    </main>
+
+    <footer>
+      <p>Local workspace · source facts and route provenance remain visible</p>
+    </footer>
+  </body>
+</html>

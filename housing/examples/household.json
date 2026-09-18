@@ -1,0 +1,62 @@
+{
+  "city": "Chicago (synthetic demonstration)",
+  "timezone": "America/Chicago",
+  "currency": "USD",
+  "sources": [],
+  "people": [
+    {
+      "id": "riley",
+      "name": "Riley",
+      "modes": [
+        "walk",
+        "transit"
+      ],
+      "max_minutes": 50,
+      "destinations": [
+        {
+          "id": "conservatory",
+          "name": "Lincoln Park Conservatory (example)",
+          "lat": 41.9236,
+          "lon": -87.6355,
+          "days_per_week": 3
+        }
+      ]
+    },
+    {
+      "id": "morgan",
+      "name": "Morgan",
+      "modes": [
+        "walk",
+        "bike",
+        "transit"
+      ],
+      "max_minutes": 60,
+      "destinations": [
+        {
+          "id": "museum",
+          "name": "Museum of Science and Industry (example)",
+          "lat": 41.7906,
+          "lon": -87.5831,
+          "days_per_week": 4
+        }
+      ]
+    }
+  ],
+  "routing": {
+    "engine": "r5r",
+    "network_dir": "",
+    "date": "2026-07-21",
+    "outbound_time": "08:00",
+    "return_time": "17:30",
+    "time_window_minutes": 3,
+    "percentile": 50,
+    "threads": 1,
+    "max_memory_gb": 8,
+    "max_trip_minutes": 120,
+    "max_walk_minutes": 30,
+    "drive_enabled": false,
+    "drive_parking_minutes": 10,
+    "cache": true,
+    "max_origins": 1000
+  }
+}
