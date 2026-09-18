@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -70,7 +71,8 @@ class GeocodeTests(unittest.TestCase):
         self.assertEqual(second["fetched_at"], first["fetched_at"])
         self.assertEqual(len(files), 1)
         self.assertNotIn("Example", files[0].name)
-        self.assertEqual(cache_mode, 0o600)
+        if os.name == "posix":
+            self.assertEqual(cache_mode, 0o600)
 
     def test_no_match_is_an_empty_list_not_zero_coordinates(self) -> None:
         with tempfile.TemporaryDirectory() as directory, patch.object(
