@@ -79,4 +79,4 @@ uv build
 
 The Python package, SQLite store, and static interface are deliberately small. No service fleet, authentication database, or cloud deployment is required. [Architecture and scope](docs/ARCHITECTURE.md) explains the boundaries. [The Chicago case study](docs/CASE-STUDY.md) distinguishes the original research from what this release actually reproduces.
 
-Code and invented examples are MIT licensed. Third-party listing content, OSM, GTFS, and routing dependencies retain their own licenses and terms. Original private household data, conversation records, destination matrices, and raw collection archives are not included.
+Code and invented listing/household examples are MIT licensed. [Example route provenance and attribution](housing/examples/README.md) describe the model inputs. Third-party listing content, OSM, GTFS, and routing dependencies retain their own licenses and terms. Original private household data, conversation records, destination matrices, and raw collection archives are not included.
