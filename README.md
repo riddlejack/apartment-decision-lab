@@ -1,10 +1,10 @@
 # Room & Route
 
-**Find the apartments you'd miss. Check the commute for every roommate.**
+**Scrape ~every apartment listing in your city. Filter listings by any characteristic (commute time, rent, sqft, # of bathrooms, etc.)**
 
-I built this while apartment hunting with three roommates in Chicago. We were considering cramped places around **$2,000 per person**. After widening the search across rental sites and comparing space, bathrooms, and everyone's commute, we found a much larger place with **four bathrooms for about $1,230 each per month**—roughly $770 less than the options we'd been considering.
+Built this while apartment hunting in Chicago. Manual browsing was slow, & every apartment had trade-offs (too expensive, too few bathrooms, long commute, etc.). Built scripts to scrape ~every apt listing in Chicago, built an algorithm to calculate each roommate's commute to work. 
 
-The original search ran through Codex and custom scripts. This repo turns that work into tools other people can use.
+This repo turns that work into tools other people can use.
 
 ![Original Chicago search: 32,242 listing captures, 16,581 consolidated records, 2,930 records retained for review; commute modeling for 7,013 locations across 672 weekly departure slots.](docs/assets/chicago-search.svg)
 
