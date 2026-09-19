@@ -1,6 +1,6 @@
 ---
 name: setup-search
-description: Set up a private apartment search using the installed housing CLI.
+description: Set up a private apartment search using the installed Goldblum CLI.
 ---
 
 Run `goldblum doctor`, then `goldblum setup --city Chicago --residents 3 --budget-per-person 1200 --bedrooms 3 --bathrooms 2` with the user's actual requirements. Residents and bedrooms are separate choices. Inspect `goldblum sources check`, run `goldblum collect`, and open `goldblum review`. Unknown listing details stay in the review queue; do not discard them or invent facts.
@@ -9,4 +9,4 @@ Read docs/COLLECTION.md for adapters and adding another city's sources. If brows
 
 Read docs/ROUTING.md only if commutes are needed. Enter destinations and travel modes in the UI; Chicago network inputs can be downloaded with `goldblum network --download`. Set the timezone and a valid transit date. Determine location suitability from commute results, not a radius exclusion around work.
 
-Keep household coordinates out of Git. `--workspace PATH` goes before the subcommand; custom workspace directories need their own Git exclusion. Use `uv run housing` in a checkout. Report successful sources, unresolved gaps and any additional setup; never claim every apartment is covered.
+Keep household coordinates out of Git. `--workspace PATH` goes before the subcommand; custom workspace directories need their own Git exclusion. Use `uv run goldblum` in a checkout. Report successful sources, unresolved gaps and any additional setup; never claim every apartment is covered.
