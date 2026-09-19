@@ -803,6 +803,61 @@ def _refresh_preferences(
     payload["preference_fingerprint"] = _preference_fingerprint(config)
 
 
+def _origin_matrix(origins, destinations, jobs, config, settings, output_dir):
+    """Cache matrix rows by coordinates, preserving distinct listing identities."""
+    canonical = _canonical_config(config)
+    canonical["routing"].pop("listing_ids", None)
+    canonical["routing"].pop("max_origins", None)
+    context = {"config": canonical, "network": _network_stamp(config, include_derived=False),
+               "adapter": ENGINE_ADAPTER_REVISION, "jobs": jobs}
+    groups = {}
+    for origin in origins:
+        point_id = "point-" + _json_hash([origin["lat"], origin["lon"]])[:24]
+        groups.setdefault(point_id, []).append(origin)
+    folder = output_dir / "points"
+    cached, paths, pending = {}, {}, []
+    for point_id, entries in groups.items():
+        point = {**entries[0], "id": point_id}
+        key = _json_hash({"context": context, "point": point})
+        paths[point_id] = folder / f"{key}.json"
+        if settings.get("cache") and paths[point_id].is_file():
+            try:
+                value = json.loads(paths[point_id].read_text())
+                if value.get("key") == key and isinstance(value.get("rows"), list):
+                    cached[point_id] = value
+                    continue
+            except (OSError, ValueError, AttributeError):
+                pass
+        pending.append(point)
+    metadata = next(iter(cached.values()), {}).get("metadata", {})
+    if pending:
+        rows, metadata = _execute_r5r(origins=pending, destinations=destinations, jobs=jobs,
+                                     config=config, settings=settings, output_dir=output_dir)
+        by_point = {point["id"]: [] for point in pending}
+        for row in rows:
+            point_id = row["from_id"] if row["direction"] == "outbound" else row["to_id"]
+            if point_id in by_point:
+                by_point[point_id].append(row)
+        for point in pending:
+            point_id = point["id"]
+            value = {"key": paths[point_id].stem, "rows": by_point[point_id], "metadata": metadata}
+            cached[point_id] = value
+            if settings.get("cache"):
+                folder.mkdir(parents=True, exist_ok=True, mode=0o700)
+                temporary = paths[point_id].with_suffix(".tmp")
+                temporary.write_text(json.dumps(value, allow_nan=False))
+                temporary.replace(paths[point_id])
+    expanded = []
+    for point_id, entries in groups.items():
+        for origin in entries:
+            for raw in cached[point_id]["rows"]:
+                row = dict(raw)
+                row["from_id" if row["direction"] == "outbound" else "to_id"] = origin["id"]
+                expanded.append(row)
+    return expanded, {**metadata, "unique_origins": len(groups), "origins_computed": len(pending),
+                       "origins_reused": len(groups) - len(pending)}
+
+
 def compute_routes(
     listings: Iterable[dict[str, Any]],
     config: dict[str, Any],
@@ -899,7 +954,7 @@ def compute_routes(
     matrix_rows: list[dict[str, str]] = []
     engine_metadata: dict[str, Any] = {}
     if valid_origins and valid_destinations and jobs:
-        matrix_rows, engine_metadata = _execute_r5r(
+        matrix_rows, engine_metadata = _origin_matrix(
             origins=valid_origins,
             destinations=valid_destinations,
             jobs=jobs,

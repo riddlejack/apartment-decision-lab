@@ -35,6 +35,15 @@ def test_local_api_protects_configuration_and_imports(tmp_path):
         assert store.listings() == []
         request.remove_header("Origin")
         assert json.load(urlopen(request))["observations_added"] == 1
+        setup = {"city": "Chicago", "search": {"residents": 3, "budget_per_person": 1100, "min_sqft": 900}}
+        post = lambda path, value: json.load(urlopen(Request(url + path, data=json.dumps(value).encode(), headers={"Content-Type": "application/json"})))
+        assert post("/api/setup", setup)["config"]["search"]["max_rent"] == 3300
+        post("/api/annotation", {"id": "import:test", "status": "shortlist", "note": "Visit Saturday"})
+        current = json.load(urlopen(url + "/api/state"))
+        assert current["listings"][0]["annotation"]["status"] == "shortlist"
+        assert current["listings"][0]["search"]["needs_check"] == ["sqft"]
+        exported = urlopen(url + "/api/export.csv").read().decode()
+        assert "Visit Saturday" not in exported
         try:
             urlopen(url + "/../config.json")
             raise AssertionError("Private configuration served as static file")

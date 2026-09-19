@@ -4,13 +4,16 @@ build-backend = "hatchling.build"
 
 [project]
 name = "apartment-decision-lab"
-version = "0.1.0"
-description = "Local apartment research and household commute comparison, without an AI runtime"
+version = "0.2.0"
+description = "Room & Route: find apartments and compare roommate commutes"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 authors = [{name = "Jack Riddle"}]
 dependencies = ["tzdata>=2025.1; sys_platform == 'win32'"]
+
+[project.optional-dependencies]
+collect = ["homeharvest==0.8.18"]
 
 [project.scripts]
 housing = "housing.cli:main"

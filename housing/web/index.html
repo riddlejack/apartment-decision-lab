@@ -4,200 +4,152 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
-    <title>Apartment Decision Lab</title>
+    <title>Room &amp; Route</title>
+    <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
     <link rel="stylesheet" href="/style.css">
+    <script src="/vendor/leaflet/leaflet.js" defer></script>
     <script src="/app.js" defer></script>
   </head>
   <body>
     <header class="topbar">
-      <a class="brand" href="#comparison" aria-label="Apartment Decision Lab home">
-        <span class="brand-mark" aria-hidden="true">AD</span>
-        <span>Apartment Decision Lab</span>
+      <a class="brand" href="#search" aria-label="Room and Route home">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span></span>
+        <span>Room &amp; Route</span>
       </a>
-      <nav class="top-actions" aria-label="Workspace actions">
-        <button class="button button-quiet" id="refresh-button" type="button">Refresh</button>
-        <a class="button button-quiet" href="/api/export.csv" download>Export CSV</a>
-        <button class="button button-dark" id="open-import-button" type="button">Import JSON</button>
+      <nav class="top-nav" aria-label="Workspace sections">
+        <a href="#search">Search</a><a href="#results">Listings</a><a href="#household">Commutes</a>
       </nav>
+      <div class="top-actions">
+        <a class="button button-quiet button-compact" href="/api/export.csv" download>Export</a>
+        <button class="button button-dark button-compact" id="collect-button" type="button">Refresh listings</button>
+      </div>
     </header>
 
     <main class="page-shell">
-      <section class="page-heading" id="comparison">
-        <div>
-          <h1>Choose a home the household can live with.</h1>
-          <p>Compare asking rent, listing evidence, and real route results. Unknown fields stay unknown.</p>
-        </div>
-        <button class="button button-accent" id="route-button" type="button">Compute routes</button>
-      </section>
-
       <div class="notice" id="notice" role="status" aria-live="polite" hidden></div>
 
-      <section class="comparison-panel" aria-labelledby="listings-heading">
-        <div class="section-bar">
+      <section class="search-section" id="search" aria-labelledby="search-heading">
+        <div class="search-intro">
+          <p class="section-number" aria-hidden="true">01</p>
           <div>
-            <h2 id="listings-heading">Listings</h2>
-            <p id="result-summary">Loading workspace…</p>
+            <h1 id="search-heading">Find a place that works for everyone.</h1>
+            <p>Set the dealbreakers. Room &amp; Route keeps missing facts visible and brings new listings back into one shortlist.</p>
           </div>
-          <label class="field sort-field">
-            <span>Sort by</span>
-            <select id="sort-select">
-              <option value="rank">Commute rank</option>
-              <option value="rent">Lowest rent</option>
-              <option value="newest">Newest evidence</option>
-            </select>
-          </label>
         </div>
-
-        <form class="filter-bar" id="filter-form">
-          <label class="field field-grow">
-            <span>Search</span>
-            <input id="search-input" type="search" placeholder="Address, title, or source">
-          </label>
-          <label class="field field-compact">
-            <span>Minimum rent</span>
-            <input id="min-rent-input" type="number" min="0" step="50" inputmode="numeric" placeholder="Any">
-          </label>
-          <label class="field field-compact">
-            <span>Maximum rent</span>
-            <input id="max-rent-input" type="number" min="0" step="50" inputmode="numeric" placeholder="Any">
-          </label>
-          <label class="field field-small">
-            <span>Bedrooms</span>
-            <select id="bedrooms-select">
-              <option value="">Any</option>
-              <option value="0">Studio+</option>
-              <option value="1">1+</option>
-              <option value="2">2+</option>
-              <option value="3">3+</option>
-              <option value="4">4+</option>
-            </select>
-          </label>
-          <label class="field field-small">
-            <span>Bathrooms</span>
-            <select id="bathrooms-select">
-              <option value="">Any</option>
-              <option value="1">1+</option>
-              <option value="1.5">1.5+</option>
-              <option value="2">2+</option>
-              <option value="3">3+</option>
-            </select>
-          </label>
-          <label class="field field-small">
-            <span>Source</span>
-            <select id="source-select">
-              <option value="">All</option>
-            </select>
-          </label>
-          <label class="check-field">
-            <input id="historical-input" type="checkbox" checked>
-            <span>Include historical</span>
-          </label>
-          <label class="check-field">
-            <input id="unknown-input" type="checkbox" checked>
-            <span>Keep unknown values</span>
-          </label>
-          <button class="text-button" id="clear-filters-button" type="button">Clear</button>
+        <form class="intake-panel" id="setup-form">
+          <div class="intake-primary">
+            <label class="field field-city"><span>Where are you looking?</span><input id="setup-city" name="city" autocomplete="address-level2" placeholder="Chicago" required></label>
+            <label class="field"><span>Roommates</span><input id="setup-residents" name="residents" type="number" min="1" max="12" step="1" inputmode="numeric" required></label>
+            <label class="field"><span>Budget each</span><span class="money-input"><span>$</span><input id="setup-budget" name="budget_per_person" type="number" min="0" step="50" inputmode="numeric" placeholder="1,400" required></span></label>
+            <label class="field"><span>Max total rent</span><span class="money-input"><span>$</span><input id="setup-max-rent" name="max_rent" type="number" min="0" step="50" inputmode="numeric" placeholder="Auto"></span></label>
+          </div>
+          <div class="intake-details">
+            <label class="field"><span>Bedrooms</span><input id="setup-bedrooms" name="min_bedrooms" type="number" min="0" max="20" step="0.5" inputmode="decimal" required></label>
+            <label class="field"><span>Bathrooms</span><input id="setup-bathrooms" name="min_bathrooms" type="number" min="0" max="20" step="0.5" inputmode="decimal" placeholder="Any"></label>
+            <label class="field"><span>Minimum sq ft</span><input id="setup-sqft" name="min_sqft" type="number" min="0" step="50" inputmode="numeric" placeholder="Any"></label>
+            <label class="field"><span>Move-in</span><input id="setup-move-in" name="move_in_date" type="date"></label>
+            <label class="toggle-field"><input id="setup-pets" name="pets_required" type="checkbox"><span><strong>Pets required</strong><small>Unknown stays in review</small></span></label>
+            <label class="toggle-field"><input id="setup-parking" name="parking_required" type="checkbox"><span><strong>Parking required</strong><small>Unknown stays in review</small></span></label>
+          </div>
+          <div class="intake-footer">
+            <p id="setup-hint">Chicago can add the current starter source set. Other cities may need manual source setup.</p>
+            <span class="form-status" id="setup-status" role="status" aria-live="polite"></span>
+            <button class="button button-accent" id="setup-button" type="submit">Save search &amp; set up sources</button>
+          </div>
         </form>
+      </section>
 
-        <div class="route-context" id="route-context" role="note" hidden></div>
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">Home</th>
-                <th scope="col">Rent</th>
-                <th scope="col">Space</th>
-                <th scope="col">Evidence</th>
-                <th scope="col">Household commute</th>
-                <th scope="col"><span class="visually-hidden">Open listing</span></th>
-              </tr>
-            </thead>
-            <tbody id="listing-rows"></tbody>
-          </table>
+      <section class="collection-strip" aria-labelledby="collection-heading">
+        <div class="collection-title">
+          <p class="section-number" aria-hidden="true">02</p>
+          <div><h2 id="collection-heading">Collect</h2><p id="collection-summary">Checking the workspace…</p></div>
         </div>
-        <div class="empty-state" id="empty-state" hidden>
-          <h3>No listings to compare</h3>
-          <p id="empty-message">Import a JSON file or use the CLI to add listing evidence.</p>
+        <div class="source-run-list" id="source-run-list"></div>
+        <button class="button button-dark" id="collection-run-button" type="button">Run collection</button>
+      </section>
+
+      <section class="results-section" id="results" aria-labelledby="results-heading">
+        <div class="results-heading">
+          <div class="results-title">
+            <p class="section-number" aria-hidden="true">03</p>
+            <div><h2 id="results-heading">Compare apartments</h2><p id="result-summary">Loading listings…</p></div>
+          </div>
+          <div class="results-actions">
+            <div class="view-switch" aria-label="Listing view">
+              <button class="view-button is-active" id="list-view-button" type="button" aria-pressed="true">List</button>
+              <button class="view-button" id="map-view-button" type="button" aria-pressed="false">Map</button>
+            </div>
+            <label class="field sort-field"><span>Sort</span><select id="sort-select"><option value="newest">New &amp; changed</option><option value="rent">Lowest rent</option><option value="sqft">Most space</option><option value="rank">Commute rank</option></select></label>
+          </div>
+        </div>
+        <form class="filter-panel" id="filter-form">
+          <label class="field filter-search"><span>Search</span><input id="search-input" type="search" placeholder="Address, neighborhood, amenity"></label>
+          <label class="field"><span>Max rent</span><input id="max-rent-input" type="number" min="0" step="50" inputmode="numeric" placeholder="Any"></label>
+          <label class="field"><span>Beds</span><select id="bedrooms-select"><option value="">Any</option><option value="0">Studio+</option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option></select></label>
+          <label class="field"><span>Baths</span><select id="bathrooms-select"><option value="">Any</option><option value="1">1+</option><option value="1.5">1.5+</option><option value="2">2+</option><option value="3">3+</option></select></label>
+          <label class="field"><span>Min sq ft</span><input id="min-sqft-input" type="number" min="0" step="50" inputmode="numeric" placeholder="Any"></label>
+          <label class="field"><span>Source</span><select id="source-select"><option value="">All sources</option></select></label>
+          <label class="check-field"><input id="pets-input" type="checkbox"><span>Pets</span></label>
+          <label class="check-field"><input id="parking-input" type="checkbox"><span>Parking</span></label>
+          <label class="check-field"><input id="unknown-input" type="checkbox" checked><span>Keep unknowns</span></label>
+          <label class="check-field"><input id="shortlist-input" type="checkbox"><span>Shortlist only</span></label>
+          <label class="check-field"><input id="hide-rejected-input" type="checkbox" checked><span>Hide rejected</span></label>
+          <button class="text-button" id="clear-filters-button" type="button">Clear filters</button>
+        </form>
+        <div class="route-context" id="route-context" role="note" hidden></div>
+        <div class="duplicates-note" id="duplicates-note" hidden></div>
+        <div class="list-view" id="list-view">
+          <div class="listing-grid" id="listing-grid"></div>
+          <div class="empty-state" id="empty-state" hidden><h3>No matches in this view.</h3><p id="empty-message">Try keeping unknown values or clearing a filter.</p></div>
+        </div>
+        <div class="map-view" id="map-view" hidden>
+          <div class="map-gate" id="map-gate">
+            <div><h3>Load the listing map?</h3><p>This sends only visible listing coordinates and map tile requests to OpenStreetMap. Household destinations stay off the map.</p></div>
+            <button class="button button-accent" id="load-map-button" type="button">Load map</button>
+          </div>
+          <div id="listing-map" class="listing-map" aria-label="Map of filtered listings" hidden></div>
+          <div class="map-footer"><p class="map-status" id="map-status" role="status" aria-live="polite"></p><button class="button button-quiet button-compact" id="locate-listings-button" type="button">Locate missing addresses</button></div>
+          <p class="map-privacy">Location lookup sends up to 25 listing addresses per click to the US Census geocoder. Cached coordinates are kept.</p>
         </div>
       </section>
 
-      <section class="workspace-grid" aria-label="Workspace setup">
+      <section class="household-section" id="household" aria-labelledby="household-heading">
+        <div class="section-heading">
+          <div><p class="section-number" aria-hidden="true">04</p><h2 id="household-heading">Compare commutes</h2><p>Each person keeps their own destinations, schedule, modes, and commute cap.</p></div>
+          <button class="button button-accent" id="route-button" type="button">Compute routes</button>
+        </div>
         <article class="setup-panel setup-panel-wide">
           <div class="panel-heading">
-            <div>
-              <h2>Household &amp; destinations</h2>
-              <p>Set each person’s destinations, weekly frequency, allowed modes, and commute cap.</p>
-            </div>
+            <div><h3>Household &amp; destinations</h3><p>Driving uses uncongested road speeds. Rush-hour traffic is not included.</p></div>
             <button class="button button-quiet" id="add-person-button" type="button">Add person</button>
           </div>
-
           <form id="config-form">
             <div class="location-grid">
-              <label class="field">
-                <span>City</span>
-                <input id="city-input" name="city" autocomplete="address-level2" placeholder="Your search city">
-              </label>
-              <label class="field">
-                <span>Timezone</span>
-                <input id="timezone-input" name="timezone" placeholder="America/Chicago">
-              </label>
-              <label class="field">
-                <span>Currency</span>
-                <input id="currency-input" name="currency" maxlength="3" value="USD" readonly>
-              </label>
+              <label class="field"><span>City</span><input id="city-input" name="city" autocomplete="address-level2" placeholder="Your search city"></label>
+              <label class="field"><span>Timezone</span><input id="timezone-input" name="timezone" placeholder="America/Chicago"></label>
+              <label class="field"><span>Currency</span><input id="currency-input" name="currency" maxlength="3" value="USD" readonly></label>
             </div>
-
             <div class="people-list" id="people-list"></div>
-            <div class="panel-footer">
-              <span class="form-status" id="config-status" role="status" aria-live="polite"></span>
-              <button class="button button-dark" id="save-config-button" type="submit">Save household</button>
+            <div class="routing-quick">
+              <div class="routing-quick-heading"><div><h3>Route timing</h3><p>Outbound and return are calculated separately.</p></div><code>housing network --download --city Chicago</code></div>
+              <div class="routing-quick-grid">
+                <label class="field"><span>Schedule date</span><input id="route-date-input" type="date"></label>
+                <label class="field"><span>Leave home</span><input id="route-outbound-input" type="time"></label>
+                <label class="field"><span>Leave destination</span><input id="route-return-input" type="time"></label>
+                <label class="field"><span>Threads</span><input id="route-threads-input" type="number" min="1" max="32" step="1" inputmode="numeric"></label>
+                <label class="field"><span>Memory (GB)</span><input id="route-memory-input" type="number" min="1" max="128" step="1" inputmode="numeric"></label>
+              </div>
             </div>
+            <details class="advanced-block"><summary>Advanced routing JSON</summary><label class="field json-field"><span>Routing configuration</span><textarea id="routing-json" rows="10" spellcheck="false"></textarea></label><p class="field-help">Requires valid dated OSM/GTFS inputs. Scheduled transit is not a reliability forecast.</p></details>
+            <div class="panel-footer"><span class="form-status" id="config-status" role="status" aria-live="polite"></span><button class="button button-dark" id="save-config-button" type="submit">Save household</button></div>
           </form>
         </article>
+      </section>
 
-        <aside class="setup-stack">
-          <article class="setup-panel">
-            <h2>Routing engine</h2>
-            <p>Route calculation is optional and can take time. It is unavailable until an OSM and GTFS engine is configured.</p>
-            <p class="guidance"><a href="https://github.com/riddlejack/apartment-decision-lab/blob/main/docs/ROUTING.md" target="_blank" rel="noopener noreferrer">Open the routing setup guide</a> for engine setup, dates, feeds, and resource limits. Drive results are free-flow estimates.</p>
-            <details>
-              <summary>Advanced routing JSON</summary>
-              <label class="field json-field">
-                <span>Routing configuration</span>
-                <textarea id="routing-json" rows="10" spellcheck="false" aria-describedby="routing-help"></textarea>
-              </label>
-              <p class="field-help" id="routing-help">Saved as the config’s <code>routing</code> object. Invalid JSON will not be submitted.</p>
-            </details>
-          </article>
-
-          <article class="setup-panel import-panel" id="import-panel" tabindex="-1">
-            <h2>Import listings</h2>
-            <p>Paste a JSON array or an object containing a <code>listings</code> array. Existing evidence rules still apply.</p>
-            <label class="field">
-              <span>Choose a JSON file</span>
-              <input id="json-file-input" type="file" accept="application/json,.json">
-            </label>
-            <label class="field json-field">
-              <span>JSON payload</span>
-              <textarea id="import-json" rows="8" spellcheck="false" placeholder='[{"id":"…","source":"…"}]'></textarea>
-            </label>
-            <div class="panel-footer">
-              <span class="form-status" id="import-status" role="status" aria-live="polite"></span>
-              <button class="button button-accent" id="import-button" type="button">Import listings</button>
-            </div>
-            <div class="cli-note">
-              <strong>CSV uses the CLI</strong>
-              <code>housing import path/to/listings.csv</code>
-            </div>
-          </article>
-        </aside>
+      <section class="tools-section" aria-labelledby="tools-heading">
+        <details><summary id="tools-heading">Import listing JSON</summary><div class="import-panel" id="import-panel" tabindex="-1"><p>Use this for a trusted export or a frozen sample. Collection runs use your saved sources.</p><label class="field"><span>Choose JSON</span><input id="json-file-input" type="file" accept="application/json,.json"></label><label class="field json-field"><span>Payload</span><textarea id="import-json" rows="8" spellcheck="false" placeholder='[{"id":"…","source":"…"}]'></textarea></label><div class="panel-footer"><span class="form-status" id="import-status" role="status" aria-live="polite"></span><button class="button button-accent" id="import-button" type="button">Import listings</button></div></div></details>
       </section>
     </main>
-
-    <footer>
-      <p>Local workspace · source facts and route provenance remain visible</p>
-      <p>Example map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>. <a href="https://github.com/riddlejack/apartment-decision-lab/blob/main/housing/examples/README.md" target="_blank" rel="noopener noreferrer">Transit sources and model provenance</a> · input snapshot July 18, 2026. Not sponsored or operated by Metra or other transit agencies.</p>
-    </footer>
+    <footer><p><strong>Room &amp; Route</strong> keeps your search on your computer.</p><p>Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>.</p></footer>
   </body>
 </html>

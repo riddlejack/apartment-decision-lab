@@ -5,6 +5,7 @@ import hashlib
 import json
 import threading
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 from urllib.request import Request
 
@@ -90,7 +91,7 @@ class ParseTests(unittest.TestCase):
         self.assertIsNone(first["unit"])
         self.assertIsNone(first["lat"])
         self.assertEqual(first["observed_at"], OBSERVED)
-        self.assertEqual(first["parser_version"], "appfolio-html-v1")
+        self.assertEqual(first["parser_version"], "appfolio-html-v2")
         self.assertEqual(first["source_content_sha256"], hashlib.sha256(APPFOLIO_HTML.encode()).hexdigest())
         self.assertIsNone(rows[1]["rent"], "a price range must not become a point rent")
         self.assertEqual(rows[1]["bedrooms"], 2)
@@ -157,6 +158,12 @@ class ParseTests(unittest.TestCase):
             "total_monthly_cost": 1665,
             "bedrooms": 2,
             "bathrooms": 1.5,
+            "sqft": 925,
+            "available_date": "2026-10-01",
+            "property_type": "apartment",
+            "amenities": ["laundry", "dishwasher"],
+            "pets": "cats allowed",
+            "parking": "one space",
             "lat": 35.1,
             "lon": -106.6,
             "historical": False
@@ -168,7 +175,10 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(row["total_monthly_cost"], 1665)
         self.assertEqual((row["lat"], row["lon"]), (35.1, -106.6))
         self.assertEqual(row["observed_at"], OBSERVED)
-        self.assertEqual(row["parser_version"], "json-feed-v1")
+        self.assertEqual(row["sqft"], 925)
+        self.assertEqual(row["available_date"], "2026-10-01")
+        self.assertEqual(row["amenities"], ["laundry", "dishwasher"])
+        self.assertEqual(row["parser_version"], "json-feed-v2")
         self.assertEqual(row["source_content_sha256"], hashlib.sha256(payload.encode()).hexdigest())
 
     def test_json_feed_rejects_duplicate_provider_ids(self) -> None:
@@ -333,6 +343,106 @@ class CollectionTests(unittest.TestCase):
         self.assertEqual(result["listings"][0]["id"], "synthetic-owner-feed:synthetic-101")
         self.assertEqual(result["listings"][0]["rent"], 1450)
         self.assertEqual(result["listings"][0]["total_monthly_cost"], 1505)
+
+    def test_json_pagination_follows_same_host_within_caps(self) -> None:
+        source = {
+            "id": "paged-feed", "adapter": "json", "url": "https://feed.example/page/1",
+            "enabled": True, "permission_note": "Public test feed", "max_pages": 3,
+            "max_listings": 10, "max_requests": 5, "search": {},
+        }
+        responses = [
+            fetched(200, "https://feed.example/robots.txt", "User-agent: *\nAllow: /\n", "text/plain"),
+            fetched(200, source["url"], json.dumps({"listings": [{"id": "one"}], "next": "/page/2"}), "application/json"),
+            fetched(200, "https://feed.example/page/2", json.dumps({"listings": [{"id": "two"}]}), "application/json"),
+        ]
+        with patch.object(collectors, "_fetch_url", side_effect=responses):
+            result = collectors.collect_source(source)
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(result["requests"], 3)
+        self.assertEqual([row["source_id"] for row in result["listings"]], ["one", "two"])
+        self.assertEqual(result["coverage"]["pages_succeeded"], 2)
+
+    def test_json_cross_host_next_returns_explicit_partial(self) -> None:
+        source = {
+            "id": "paged-feed", "adapter": "json", "url": "https://feed.example/page/1",
+            "enabled": True, "permission_note": "Public test feed", "max_pages": 3,
+            "max_listings": 10, "max_requests": 5, "search": {},
+        }
+        responses = [
+            fetched(200, "https://feed.example/robots.txt", "User-agent: *\nAllow: /\n", "text/plain"),
+            fetched(200, source["url"], json.dumps({"listings": [{"id": "one"}], "next": "https://other.example/page/2"}), "application/json"),
+        ]
+        with patch.object(collectors, "_fetch_url", side_effect=responses):
+            result = collectors.collect_source(source)
+        self.assertEqual(result["status"], "partial")
+        self.assertTrue(result["partial"])
+        self.assertEqual(len(result["listings"]), 1)
+        self.assertIn("different host", result["errors"][0])
+
+    def test_search_keeps_unknown_square_feet(self) -> None:
+        source = {
+            "id": "filtered", "adapter": "json", "url": "https://feed.example/listings",
+            "enabled": True, "permission_note": "Public test feed", "search": {"min_sqft": 900},
+        }
+        payload = json.dumps({"listings": [{"id": "unknown", "sqft": None}, {"id": "small", "sqft": 500}]})
+        responses = [
+            fetched(200, "https://feed.example/robots.txt", "User-agent: *\nAllow: /\n", "text/plain"),
+            fetched(200, source["url"], payload, "application/json"),
+        ]
+        with patch.object(collectors, "_fetch_url", side_effect=responses):
+            result = collectors.collect_source(source)
+        self.assertEqual([row["source_id"] for row in result["listings"]], ["unknown"])
+        self.assertEqual(result["coverage"]["unknown_sqft_retained"], 1)
+        self.assertEqual(result["coverage"]["filtered_known_mismatches"], 1)
+
+    def test_showmojo_parser_preserves_card_facts(self) -> None:
+        html = """
+        <div class='listing js-listing not-active' data-lat='41.9' data-long='-87.7' id='uid_abc123'>
+          <a href='/l/abc123/10-example-st-2a-chicago-il'></a>
+          <div class='listing-info'><p class='listing-city-state-zip'>Chicago, IL 60601</p>
+          <div class='listing-address-header'>10 Example St - 2A</div><p class='listing-title'>Bright unit</p>
+          <div class='rent-info'><span class='price'>$2,400</span> /mo · <div>Apartment</div> · <div>Available now</div></div>
+          <div class='listing-icon-wrap'><img src='bed-icon.svg'>2</div>
+          <div class='listing-icon-wrap'><img src='bath-icon.svg'>1.5</div>
+          <div class='listing-icon-wrap'><img src='ruler-icon.svg'>950</div></div>
+        </div>
+        """
+        row = collectors.parse("showmojo", html, "https://showmojo.com/account/l", "manager", OBSERVED)[0]
+        self.assertEqual(row["source_id"], "abc123")
+        self.assertEqual((row["bedrooms"], row["bathrooms"], row["sqft"]), (2, 1.5, 950))
+        self.assertEqual(row["rent"], 2400)
+        self.assertEqual((row["lat"], row["lon"]), (41.9, -87.7))
+
+    def test_homeharvest_is_optional_bounded_and_keeps_unknown_sqft(self) -> None:
+        calls = []
+
+        class Frame:
+            def to_dict(self, orient: str):
+                self.orient = orient
+                return [{
+                    "listing_id": "hh-1", "property_url": "https://www.realtor.com/rentals/details/example",
+                    "formatted_address": "1 Example St, Chicago, IL", "list_price": None,
+                    "list_price_min": 1800, "list_price_max": 2100, "beds": 2,
+                    "full_baths": 1, "half_baths": 1, "sqft": None, "style": "APARTMENT",
+                }]
+
+        def scrape_property(**kwargs):
+            calls.append(kwargs)
+            return Frame()
+
+        source = {
+            "id": "homeharvest-test", "adapter": "homeharvest", "enabled": True,
+            "permission_note": "Optional provider test", "max_listings": 5,
+            "search": {"location": "Chicago, IL", "min_sqft": 900},
+        }
+        with patch.object(collectors.importlib, "import_module", return_value=SimpleNamespace(scrape_property=scrape_property)):
+            result = collectors.collect_source(source)
+        self.assertEqual(result["status"], "success")
+        self.assertIsNone(result["requests"])
+        self.assertNotIn("sqft_min", calls[0])
+        self.assertIsNone(result["listings"][0]["sqft"])
+        self.assertIsNone(result["listings"][0]["rent"], "a rent range must not become a point rent")
+        self.assertIn("Advertised rent range", result["listings"][0]["notes"])
 
 
 if __name__ == "__main__":

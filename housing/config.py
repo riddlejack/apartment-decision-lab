@@ -16,6 +16,10 @@ def validate_config(config):
         raise ValueError("Use an IANA timezone, for example America/Chicago") from None
     if config.get("currency", "USD") != "USD":
         raise ValueError("This release supports USD listings; other currencies need an adapter")
+    from .search import validate_search
+    validate_search(config.setdefault("search", {}))
+    if not isinstance(config.get("city", ""), str) or len(config.get("city", "")) > 200:
+        raise ValueError("city must be text of at most 200 characters")
     people = config.get("people", [])
     if not isinstance(people, list) or len(people) > 20:
         raise ValueError("people must be an array of at most 20 people")
@@ -58,11 +62,12 @@ def validate_config(config):
             raise ValueError("Every source needs a unique id")
         source_ids.add(source["id"])
         adapter = source.get("adapter")
-        if adapter not in ("appfolio", "managebuilding", "json"):
-            raise ValueError("Source adapter must be appfolio, managebuilding or json")
+        from .collectors import SUPPORTED_ADAPTERS
+        if adapter not in SUPPORTED_ADAPTERS:
+            raise ValueError(f"Unsupported adapter: {adapter}")
         url = source.get("url")
         parsed = urlparse(url) if isinstance(url, str) else None
-        if not parsed or parsed.scheme not in ("http", "https") or not parsed.netloc or parsed.username is not None:
+        if adapter != "homeharvest" and (not parsed or parsed.scheme not in ("http", "https") or not parsed.netloc or parsed.username is not None):
             raise ValueError("Source URL must be an absolute HTTP(S) URL without credentials")
         enabled = source.get("enabled", False)
         if not isinstance(enabled, bool):
@@ -89,10 +94,11 @@ def save_config(workspace, config):
     path = Path(workspace) / "config.json"
     temp = path.with_suffix(".tmp")
     temp.write_text(json.dumps(config, indent=2, allow_nan=False) + "\n")
-    os.chmod(temp, 0o600)
+    if os.name == "posix":
+        os.chmod(temp, 0o600)
     temp.replace(path)
 
 
 def default_config():
     return {"city": "Chicago", "timezone": "America/Chicago", "currency": "USD",
-            "sources": [], "people": [], "routing": {}}
+            "sources": [], "people": [], "routing": {}, "search": {}}

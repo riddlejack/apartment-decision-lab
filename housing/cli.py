@@ -11,7 +11,7 @@ from pathlib import Path
 
 from . import __version__
 from .config import default_config, load_config, save_config
-from .store import Store, export_csv, read_listings
+from .store import Store, export_csv, read_listings, duplicate_groups
 
 
 def print_json(value, *, file=None):
@@ -20,7 +20,7 @@ def print_json(value, *, file=None):
 
 def state(store):
     config = load_config(store.workspace)
-    listings = store.listings()
+    listings = store.review_listings()
     path = store.workspace / "routes.json"
     routes = json.loads(path.read_text()) if path.exists() else {"results": [], "status": "not_run"}
     rankings = []
@@ -30,7 +30,61 @@ def state(store):
             rankings = rank_listings(listings, config.get("people", []), routes)
         else:
             routes = {"results": [], "status": "stale", "message": "Origins or routing configuration changed. Run housing route again."}
-    return {"listings": listings, "config": config, "routes": routes, "rankings": rankings, "status": store.status()}
+    from .search import assess, summarize
+    for listing in listings:
+        listing["search"] = assess(listing, config.get("search", {}))
+    from .sources import source_catalog
+    return {"listings": listings, "config": config, "routes": routes, "rankings": rankings, "status": store.status(),
+            "search_summary": summarize(listings, config.get("search", {})),
+            "duplicate_groups": duplicate_groups(listings), "source_catalog": source_catalog(config.get("city", "Chicago"))}
+
+
+def setup(store, city, search, include_sources=True):
+    from .sources import default_sources
+    config = load_config(store.workspace)
+    config["city"] = city
+    from .search import validate_search
+    config["search"] = validate_search(search)
+    if include_sources:
+        defaults = default_sources(city, search)
+        # Retain operator-added sources. Catalog entries are rebuilt for the new query.
+        generated = {s["id"] for s in defaults}
+        custom = [s for s in config.get("sources", []) if s["id"] not in generated and not s.get("catalog_source")]
+        config["sources"] = defaults + custom
+    save_config(store.workspace, config)
+    return {"saved": True, "config": config}
+
+
+def geocode_listings(store, limit=25):
+    from .geocode import geocode_address
+    if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 100:
+        raise ValueError("Geocode limit must be between 1 and 100")
+    config = load_config(store.workspace)
+    updated, unresolved, lookups = [], [], {}
+    for row in store.listings():
+        if row.get("lat") is not None or not row.get("address"):
+            continue
+        address = row["address"]
+        if config.get("city") and config["city"].lower() not in address.lower():
+            address += ", " + config["city"]
+        if address not in lookups:
+            if len(lookups) >= limit:
+                break
+            try:
+                lookups[address] = geocode_address(address, store.workspace / "geocodes").get("matches", [])
+            except (ValueError, RuntimeError, OSError) as exc:
+                lookups[address] = []
+                unresolved.append({"id": row["id"], "reason": str(exc)})
+        matches = lookups[address]
+        if len(matches) == 1:
+            row.update(lat=matches[0]["lat"], lon=matches[0]["lon"])
+            updated.append(row)
+        else:
+            unresolved.append({"id": row["id"], "reason": "No unique address match"})
+    if updated:
+        store.import_rows(updated)
+    return {"provider": "US Census", "addresses_checked": len(lookups), "listings_updated": len(updated),
+            "unresolved": unresolved, "note": "Estimated address locations; review map before routing."}
 
 
 def route(store):
@@ -47,13 +101,15 @@ def route(store):
 
 def collect(store, only=None):
     from .collectors import collect_source
-    sources = load_config(store.workspace).get("sources", [])
+    config = load_config(store.workspace)
+    sources = config.get("sources", [])
     if only and not any(s["id"] == only for s in sources):
         raise ValueError(f"Unknown source: {only}")
     summaries = []
     for source in sources:
         if (only and source["id"] != only) or not source.get("enabled", False):
             continue
+        source = {**source, "search": {**source.get("search", {}), **config.get("search", {})}}
         result = collect_source(source)
         rows = result.get("listings", [])
         # Import transaction validates all rows before writing any observation.
@@ -69,22 +125,40 @@ def collect(store, only=None):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Local apartment research and household commute comparison")
+    parser = argparse.ArgumentParser(description="Room & Route: find apartments and compare roommate commutes")
     parser.add_argument("--version", action="version", version=__version__)
     parser.add_argument("--workspace", type=Path, default=Path(".housing"), help="private data directory (default .housing)")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("init", help="create an empty private workspace")
     sub.add_parser("demo", help="initialize synthetic listings and an example household")
+    p = sub.add_parser("start", help="open your search; create a private workspace if needed")
+    p.add_argument("--city", default=None)
+    p.add_argument("--port", type=int, default=8765)
+    p = sub.add_parser("setup", help="save search requirements and select city sources")
+    p.add_argument("--city", default="Chicago")
+    p.add_argument("--residents", type=int, default=1)
+    p.add_argument("--budget-per-person", type=float)
+    p.add_argument("--max-rent", type=float)
+    p.add_argument("--bedrooms", type=float)
+    p.add_argument("--bathrooms", type=float)
+    p.add_argument("--sqft", type=float)
+    p.add_argument("--move-in")
     sub.add_parser("doctor", help="inspect installation and optional routing tools")
+    p = sub.add_parser("network", help="preview or download public Chicago routing inputs")
+    p.add_argument("--city")
+    p.add_argument("--download", action="store_true")
+    p.add_argument("--refresh", action="store_true", help="replace existing inputs and rebuild the derived graph next run")
     p = sub.add_parser("import", help="import JSON or CSV listings")
     p.add_argument("path", type=Path)
     p = sub.add_parser("geocode", help="explicitly send one US address to the US Census geocoder")
     p.add_argument("address", help="US street address; sent to geocoding.geo.census.gov")
+    p = sub.add_parser("geocode-listings", help="look up missing listing coordinates with US Census")
+    p.add_argument("--limit", type=int, default=25)
     for name in ("collect", "refresh"):
         p = sub.add_parser(name, help="bounded collection from enabled sources")
         p.add_argument("--source")
     p = sub.add_parser("sources", help="inspect configured sources without fetching")
-    p.add_argument("action", nargs="?", choices=["check"], default="check")
+    p.add_argument("action", nargs="?", choices=["check", "catalog"], default="check")
     p = sub.add_parser("status", help="compact machine-readable state and review queue")
     p.add_argument("--json", action="store_true", help="JSON is the default")
     sub.add_parser("route", help="compute configured outbound/return commute windows")
@@ -104,12 +178,25 @@ def main(argv=None):
                         "core": "No Node, Java, R, API key or LLM needed for import, comparison and export."})
             return 0
         workspace = args.workspace.expanduser().resolve()
-        if args.command not in ("init", "demo"):
+        if args.command not in ("init", "demo", "start", "setup"):
             # Read-only and operational commands should not create a database
             # merely because an uninitialized workspace path was mistyped.
             load_config(workspace)
         store = Store(workspace)
-        if args.command in ("init", "demo"):
+        if args.command in ("start", "setup"):
+            if not (store.workspace / "config.json").exists():
+                save_config(store.workspace, default_config())
+            if args.command == "setup":
+                search = {"residents": args.residents, "budget_per_person": args.budget_per_person,
+                          "max_rent": args.max_rent, "min_bedrooms": args.bedrooms if args.bedrooms is not None else args.residents,
+                          "min_bathrooms": args.bathrooms, "min_sqft": args.sqft, "move_in_date": args.move_in}
+                print_json(setup(store, args.city, search))
+            else:
+                if args.city:
+                    setup(store, args.city, load_config(store.workspace).get("search", {}))
+                from .server import serve
+                serve(store, args.port)
+        elif args.command in ("init", "demo"):
             if (store.workspace / "config.json").exists():
                 raise ValueError("Workspace already initialized; choose --workspace NEW_DIRECTORY to preserve existing data")
             if args.command == "demo":
@@ -127,13 +214,20 @@ def main(argv=None):
         elif args.command == "geocode":
             from .geocode import geocode_address
             print_json(geocode_address(args.address, store.workspace / "geocodes"))
+        elif args.command == "geocode-listings":
+            print_json(geocode_listings(store, args.limit))
+        elif args.command == "network":
+            from .network import prepare
+            print_json(prepare(store.workspace, load_config(store.workspace), download=args.download,
+                               refresh=args.refresh, city=args.city))
         elif args.command in ("collect", "refresh"):
             result = collect(store, args.source)
             print_json(result)
             return 1 if any(s["status"] in ("error", "blocked") for s in result["sources"]) else 0
         elif args.command == "sources":
             config = load_config(store.workspace)
-            print_json({"sources": config.get("sources", []), "network_requests": 0, "note": "Configuration check only; collect performs a bounded live fetch."})
+            from .sources import source_catalog
+            print_json({"sources": source_catalog(config.get("city", "Chicago")) if args.action == "catalog" else config.get("sources", []), "network_requests": 0, "note": "Configuration only. Run collect for fresh listings."})
         elif args.command == "status":
             load_config(store.workspace)
             print_json(store.status())

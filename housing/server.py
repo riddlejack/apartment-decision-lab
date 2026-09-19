@@ -6,7 +6,7 @@ import json
 import threading
 from urllib.parse import urlparse
 
-from .cli import route, state
+from .cli import route, state, collect, setup, geocode_listings
 from .config import save_config
 from .store import export_csv
 
@@ -20,13 +20,13 @@ class Handler(BaseHTTPRequestHandler):
         pass  # Don't log user configuration or URLs.
 
     def send(self, code, content, content_type="application/json"):
-        data = json.dumps(content, allow_nan=False).encode() if content_type == "application/json" else content.encode()
+        data = content if isinstance(content, bytes) else json.dumps(content, allow_nan=False).encode() if content_type == "application/json" else content.encode()
         self.send_response(code)
         self.send_header("Content-Type", content_type + "; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
-        self.send_header("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'")
+        self.send_header("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'")
         if self.path == "/api/export.csv":
             self.send_header("Content-Disposition", 'attachment; filename="apartments.csv"')
         self.end_headers()
@@ -52,11 +52,16 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 assets = {"/": ("index.html", "text/html"), "/index.html": ("index.html", "text/html"),
                           "/app.js": ("app.js", "text/javascript"), "/style.css": ("style.css", "text/css")}
+                for name, mime in (("leaflet.js", "text/javascript"), ("leaflet.css", "text/css"),
+                                   ("images/marker-icon.png", "image/png"), ("images/marker-icon-2x.png", "image/png"),
+                                   ("images/marker-shadow.png", "image/png"), ("images/layers.png", "image/png"),
+                                   ("images/layers-2x.png", "image/png")):
+                    assets["/vendor/leaflet/" + name] = ("vendor/leaflet/" + name, mime)
                 if path not in assets:
                     self.send(404, {"error": "Not found"})
                     return
                 filename, mime = assets[path]
-                self.send(200, files("housing").joinpath("web", filename).read_text(), mime)
+                self.send(200, files("housing").joinpath("web", filename).read_bytes(), mime)
         except (ValueError, OSError, RuntimeError) as exc:
             self.send(400, {"error": str(exc)})
 
@@ -85,6 +90,20 @@ class Handler(BaseHTTPRequestHandler):
                     self.send(200, self.store.import_rows(body["listings"]))
                 elif self.path == "/api/routes":
                     self.send(200, route(self.store))
+                elif self.path == "/api/collect":
+                    self.send(200, collect(self.store))
+                elif self.path == "/api/setup":
+                    if not isinstance(body, dict):
+                        raise ValueError("Expected search setup")
+                    self.send(200, setup(self.store, body.get("city", "Chicago"), body.get("search", {}), body.get("include_sources", True)))
+                elif self.path == "/api/annotation":
+                    if not isinstance(body, dict):
+                        raise ValueError("Expected listing annotation")
+                    self.send(200, self.store.annotate(body.get("id"), body.get("status", "none"), body.get("note", "")))
+                elif self.path == "/api/geocode-listings":
+                    if not isinstance(body, dict):
+                        raise ValueError("Expected geocode options")
+                    self.send(200, geocode_listings(self.store, body.get("limit", 25)))
                 elif self.path == "/api/geocode":
                     from .geocode import geocode_address
                     if not isinstance(body, dict):
@@ -100,7 +119,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def serve(store, port):
     server = ThreadingHTTPServer(("127.0.0.1", port), partial(Handler, store=store, lock=threading.Lock()))
-    print(f"Apartment Decision Lab: http://127.0.0.1:{server.server_port} (Ctrl-C to stop)", flush=True)
+    print(f"Room & Route: http://127.0.0.1:{server.server_port} (Ctrl-C to stop)", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

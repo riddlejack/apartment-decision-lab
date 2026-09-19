@@ -94,6 +94,27 @@ def _fake_engine(*, origins, destinations, jobs, **kwargs):
     return rows, {"r5r_version": "test-engine"}
 
 
+def test_added_origin_only_computes_new_coordinates(tmp_path, monkeypatch):
+    network = tmp_path / "network"
+    network.mkdir()
+    _write_gtfs(network / "feed.zip")
+    config = _config(network)
+    config["routing"]["cache"] = True
+    calls = []
+    def engine(**kwargs):
+        calls.append(len(kwargs["origins"]))
+        return _fake_engine(**kwargs)
+    monkeypatch.setattr(routing, "_execute_r5r", engine)
+    listings = [{"id": "a", "lat": 41.89, "lon": -87.62}, {"id": "b", "lat": 41.89, "lon": -87.62}]
+    first = routing.compute_routes(listings, config, tmp_path / "routes")
+    listings.append({"id": "c", "lat": 41.90, "lon": -87.65})
+    second = routing.compute_routes(listings, config, tmp_path / "routes")
+    assert calls == [1, 1]
+    assert {r["listing_id"] for r in second["results"]} == {"a", "b", "c"}
+    assert second["engine"]["metadata"]["origins_reused"] == 1
+    assert len(first["results"]) == 6
+
+
 def test_compute_respects_person_modes_direction_times_and_weights(tmp_path, monkeypatch):
     network = tmp_path / "network"
     network.mkdir()
