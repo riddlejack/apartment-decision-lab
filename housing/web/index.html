@@ -68,6 +68,14 @@
         <button class="button button-dark" id="collection-run-button" type="button">Run collection</button>
       </section>
 
+      <details class="assisted-panel">
+        <summary>Search the remaining sites</summary>
+        <p>Automatic collection covers part of the market. Use Codex or Claude Code with this repo’s <strong>collect-browser</strong> skill to search these sites, import batches, and save your place.</p>
+        <p>Start with <code>housing assisted plan</code>. Each link below opens a source or saved resume point. Import browser captures using the JSON import below.</p>
+        <ul id="assisted-plan"></ul>
+        <a href="/api/collection-plan" download="collection-plan.json">Download collection plan</a>
+      </details>
+
       <section class="results-section" id="results" aria-labelledby="results-heading">
         <div class="results-heading">
           <div class="results-title">
@@ -147,7 +155,7 @@
       </section>
 
       <section class="tools-section" aria-labelledby="tools-heading">
-        <details><summary id="tools-heading">Import listing JSON</summary><div class="import-panel" id="import-panel" tabindex="-1"><p>Use this for a trusted export or a frozen sample. Collection runs use your saved sources.</p><label class="field"><span>Choose JSON</span><input id="json-file-input" type="file" accept="application/json,.json"></label><label class="field json-field"><span>Payload</span><textarea id="import-json" rows="8" spellcheck="false" placeholder='[{"id":"…","source":"…"}]'></textarea></label><div class="panel-footer"><span class="form-status" id="import-status" role="status" aria-live="polite"></span><button class="button button-accent" id="import-button" type="button">Import listings</button></div></div></details>
+        <details><summary id="tools-heading">Import listings or browser captures</summary><div class="import-panel" id="import-panel" tabindex="-1"><p>Import a listing export or browser capture JSON. Browser captures also save search scope and resume progress.</p><label class="field"><span>Choose JSON</span><input id="json-file-input" type="file" accept="application/json,.json"></label><label class="field json-field"><span>Payload</span><textarea id="import-json" rows="8" spellcheck="false" placeholder='[{"id":"…","source":"…"}]'></textarea></label><div class="panel-footer"><span class="form-status" id="import-status" role="status" aria-live="polite"></span><button class="button button-accent" id="import-button" type="button">Import listings</button></div></div></details>
       </section>
     </main>
     <footer><p><strong>Room &amp; Route</strong> keeps your search on your computer.</p><p>Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>.</p></footer>

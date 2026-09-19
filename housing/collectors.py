@@ -1226,8 +1226,8 @@ def collect_source(source: Mapping[str, object], *, timeout: int = 20) -> dict:
         return _result("error", "timeout must be positive", 0)
     if adapter == "assisted":
         return _result(
-            "blocked",
-            str(source.get("assisted_reason") or "This source requires a user-assisted browser workflow; no scripted bypass attempted."),
+            "unimplemented",
+            str(source.get("assisted_reason") or "No scripted collector is implemented for this source; use the documented user-assisted workflow."),
             0,
         )
     if adapter == "homeharvest":
@@ -1267,6 +1267,7 @@ def collect_source(source: Mapping[str, object], *, timeout: int = 20) -> dict:
     pages_succeeded = 0
     next_url: str | None = start_url
     explicit_empty = False
+    listing_cap_truncated = False
 
     while next_url and pages_attempted < max_pages and len(rows) < max_listings and requests_made < max_requests:
         if next_url in seen_pages:
@@ -1314,10 +1315,11 @@ def collect_source(source: Mapping[str, object], *, timeout: int = 20) -> dict:
             if row["source_id"] in seen_ids:
                 duplicates += 1
                 continue
+            if len(rows) >= max_listings:
+                listing_cap_truncated = True
+                break
             seen_ids.add(row["source_id"])
             rows.append(row)
-            if len(rows) >= max_listings:
-                break
         candidate = _json_next_url(payload, fetched.url) if adapter == "json" else _html_next_url(payload, fetched.url)
         if candidate and urlsplit(candidate).netloc.lower() != parts.netloc.lower():
             errors.append("pagination pointed to a different host; collection stopped")
@@ -1334,8 +1336,8 @@ def collect_source(source: Mapping[str, object], *, timeout: int = 20) -> dict:
             rows, pages_attempted=pages_attempted, pages_succeeded=pages_succeeded,
             parsed=len(rows) + duplicates, duplicates=duplicates,
         ))
-    cap_partial = len(rows) >= max_listings or bool(next_url) and (
-        pages_attempted >= max_pages or requests_made >= max_requests
+    cap_partial = listing_cap_truncated or bool(next_url) and (
+        len(rows) >= max_listings or pages_attempted >= max_pages or requests_made >= max_requests
     )
     partial = bool(errors) or cap_partial
     coverage = _coverage(
@@ -1347,7 +1349,7 @@ def collect_source(source: Mapping[str, object], *, timeout: int = 20) -> dict:
         filtered=filtered,
     )
     if filtered_rows:
-        status = "partial" if errors else "success"
+        status = "partial" if partial else "success"
         message = (
             f"Parsed {len(filtered_rows)} listing record(s) across {pages_succeeded} page(s); {robots_message}."
         )
@@ -1355,8 +1357,18 @@ def collect_source(source: Mapping[str, object], *, timeout: int = 20) -> dict:
             message += " Partial result: pagination remains after a configured page, listing, or request cap was reached."
         if errors:
             message += f" Partial result: {errors[-1]}"
+        resume_url = next_url if partial and not listing_cap_truncated else None
         return _result(status, message, requests_made, filtered_rows, partial=partial,
-                       coverage=coverage, errors=errors, resume_url=next_url if partial else None)
+                       coverage=coverage, errors=errors, resume_url=resume_url)
+    if cap_partial and not errors:
+        return _result(
+            "partial",
+            "No parsed records survived known-fact filters before a configured page, listing, or request cap was reached; the result remains partial.",
+            requests_made,
+            partial=True,
+            coverage=coverage,
+            resume_url=next_url if not listing_cap_truncated else None,
+        )
     if errors:
         blocked = any(
             "blocked" in value or "human-verification" in value or "different host" in value

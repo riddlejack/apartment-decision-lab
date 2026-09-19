@@ -8,6 +8,7 @@
     collectionRunButton: document.querySelector("#collection-run-button"),
     collectionSummary: document.querySelector("#collection-summary"),
     sourceRunList: document.querySelector("#source-run-list"),
+    assistedPlan: document.querySelector("#assisted-plan"),
     setupForm: document.querySelector("#setup-form"),
     setupCity: document.querySelector("#setup-city"),
     setupResidents: document.querySelector("#setup-residents"),
@@ -175,11 +176,13 @@
         status: isRecord(payload.status) ? payload.status : {},
         searchSummary: isRecord(payload.search_summary) ? payload.search_summary : {},
         duplicateGroups: Array.isArray(payload.duplicate_groups) ? payload.duplicate_groups : [],
-        sourceCatalog: Array.isArray(payload.source_catalog) ? payload.source_catalog : []
+        sourceCatalog: Array.isArray(payload.source_catalog) ? payload.source_catalog : [],
+        collectionPlan: isRecord(payload.collection_plan) ? payload.collection_plan : {}
       };
       configSnapshot = deepCopy(workspace.config);
       renderSourceOptions();
       renderCollectionStatus();
+      renderAssistedPlan();
       renderListings();
       renderRouteContext();
       renderDuplicateGroups();
@@ -339,7 +342,8 @@
         else if (run && run.captured_at) chip.title = `Last run ${formatDateTime(run.captured_at)}`;
         els.sourceRunList.append(chip);
     });
-    const catalogGaps = workspace.sourceCatalog.filter((source) => isRecord(source) && source.enabled === false);
+    const progressById = new Map((workspace.collectionPlan.sources || []).map((item) => [item.source.id, item.progress]));
+    const catalogGaps = workspace.sourceCatalog.filter((source) => isRecord(source) && source.enabled === false && !progressById.get(source.id));
     catalogGaps.forEach((source) => {
       const chip = createElement("span", "source-run", `${sourceName(source)} · gap`);
       chip.dataset.status = "blocked";
@@ -347,12 +351,31 @@
       els.sourceRunList.append(chip);
     });
     if (!ids.length && !catalogGaps.length) els.sourceRunList.append(createElement("span", "source-run", "No sources configured"));
-    const failed = [...latestBySource.values()].filter((run) => run.blocked === true || ["error", "failed", "blocked"].includes(String(run.status).toLocaleLowerCase())).length;
+    const failed = [...latestBySource.values()].filter((run) => run.blocked === true || ["error", "failed", "blocked", "unimplemented"].includes(String(run.status).toLocaleLowerCase())).length;
     const partial = [...latestBySource.values()].filter((run) => run.partial === true || String(run.status).toLocaleLowerCase() === "partial").length;
     if (!sources.length) els.collectionSummary.textContent = catalogGaps.length ? `No active sources; ${catalogGaps.length} known coverage gap${catalogGaps.length === 1 ? "" : "s"}.` : "Save a search to set up sources.";
     else if (!runs.length) els.collectionSummary.textContent = `${sources.length} source${sources.length === 1 ? "" : "s"} ready; no run recorded yet.`;
     else if (failed || partial || catalogGaps.length) els.collectionSummary.textContent = `${runs.length} recent run${runs.length === 1 ? "" : "s"}; ${failed} blocked or failed, ${partial} partial, ${catalogGaps.length} catalog gap${catalogGaps.length === 1 ? "" : "s"}.`;
     else els.collectionSummary.textContent = `${runs.length} recent run${runs.length === 1 ? "" : "s"}; configured sources reported no errors.`;
+  }
+
+  function renderAssistedPlan() {
+    els.assistedPlan.replaceChildren();
+    const items = workspace.collectionPlan.sources || [];
+    items.filter((item) => item.action !== "none" && item.action !== "collect_http").forEach((item) => {
+      const row = createElement("li");
+      const source = item.source || {};
+      const url = validHttpUrl(item.resume_url || source.url);
+      const link = createElement(url ? "a" : "span", "", source.name || source.id);
+      if (url) { link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer"; }
+      const progress = item.progress;
+      const detail = progress
+        ? `${progress.status} · ${progress.pages_visited} page(s) visited${item.resume_url ? " · resume saved" : ""}`
+        : item.action === "resume_http" ? "partial automatic run · continue collection" : source.browser_recipe ? "browser recipe ready · not searched yet" : "needs source inspection";
+      row.append(link, document.createTextNode(` — ${detail}`));
+      els.assistedPlan.append(row);
+    });
+    if (!els.assistedPlan.children.length) els.assistedPlan.append(createElement("li", "", "No pending sources in this workspace."));
   }
 
   async function runCollection() {
@@ -1172,9 +1195,10 @@
     }
     const listings = Array.isArray(parsed) ? parsed : isRecord(parsed) ? parsed.listings : null;
     if (!Array.isArray(listings)) throw new Error("Use a JSON array or an object with a listings array.");
-    if (!listings.length) throw new Error("The listings array is empty.");
+    const assisted = isRecord(parsed) && isRecord(parsed.source) && typeof parsed.search_url === "string" && typeof parsed.status === "string";
+    if (!listings.length && !assisted) throw new Error("The listings array is empty.");
     if (listings.some((listing) => !isRecord(listing))) throw new Error("Every listing must be a JSON object.");
-    return listings;
+    return { payload: assisted ? parsed : { listings }, assisted, count: listings.length };
   }
 
   async function importListings() {
@@ -1187,11 +1211,11 @@
     }
     setButtonBusy(els.importButton, true, "Importing…", "Import listings");
     try {
-      await api("/api/import", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ listings }) });
+      await api(listings.assisted ? "/api/assisted-import" : "/api/import", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(listings.payload) });
       els.importJson.value = "";
       els.jsonFileInput.value = "";
       await loadState();
-      setFormStatus(els.importStatus, `Imported ${listings.length} listing${listings.length === 1 ? "" : "s"}.`, "success");
+      setFormStatus(els.importStatus, `Imported ${listings.count} listing${listings.count === 1 ? "" : "s"}.${listings.assisted ? " Browser progress saved." : ""}`, "success");
     } catch (error) {
       setFormStatus(els.importStatus, `Could not import: ${errorMessage(error)}`, "error");
     } finally {

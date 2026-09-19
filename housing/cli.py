@@ -34,9 +34,11 @@ def state(store):
     for listing in listings:
         listing["search"] = assess(listing, config.get("search", {}))
     from .sources import source_catalog
+    from .assisted import plan
     return {"listings": listings, "config": config, "routes": routes, "rankings": rankings, "status": store.status(),
             "search_summary": summarize(listings, config.get("search", {})),
-            "duplicate_groups": duplicate_groups(listings), "source_catalog": source_catalog(config.get("city", "Chicago"))}
+            "duplicate_groups": duplicate_groups(listings), "source_catalog": source_catalog(config.get("city", "Chicago")),
+            "collection_plan": plan(store)}
 
 
 def setup(store, city, search, include_sources=True):
@@ -159,6 +161,17 @@ def main(argv=None):
         p.add_argument("--source")
     p = sub.add_parser("sources", help="inspect configured sources without fetching")
     p.add_argument("action", nargs="?", choices=["check", "catalog"], default="check")
+    p = sub.add_parser("assisted", help="plan browser work, extract batches, and import captures")
+    assisted = p.add_subparsers(dest="assisted_command", required=True)
+    assisted.add_parser("plan", help="show coverage gaps and saved resume points")
+    capture = assisted.add_parser("import", help="import a browser capture and save its progress")
+    capture.add_argument("path", type=Path)
+    script = assisted.add_parser("script", help="print the read-only DOM batch extractor")
+    from .browser import RECIPES
+    script.add_argument("--recipe", choices=RECIPES, default="generic")
+    script.add_argument("--source", required=True)
+    script.add_argument("--search-url", help="original filtered search URL, preserved across pages")
+    script.add_argument("--options", type=Path, help="JSON with actual applied criteria, limits, or generic selectors")
     p = sub.add_parser("status", help="compact machine-readable state and review queue")
     p.add_argument("--json", action="store_true", help="JSON is the default")
     sub.add_parser("route", help="compute configured outbound/return commute windows")
@@ -223,7 +236,27 @@ def main(argv=None):
         elif args.command in ("collect", "refresh"):
             result = collect(store, args.source)
             print_json(result)
-            return 1 if any(s["status"] in ("error", "blocked") for s in result["sources"]) else 0
+            return 1 if any(s["status"] in ("error", "blocked", "unimplemented") for s in result["sources"]) else 0
+        elif args.command == "assisted":
+            from .assisted import plan, ingest
+            if args.assisted_command == "plan":
+                print_json(plan(store))
+            elif args.assisted_command == "import":
+                print_json(ingest(store, args.path))
+            else:
+                from .browser import extraction_script
+                from .sources import source_catalog
+                config = load_config(store.workspace)
+                sources = {s["id"]: s for s in source_catalog(config.get("city", "Chicago"))}
+                for source in config.get("sources", []):
+                    sources[source["id"]] = {**sources.get(source["id"], {}), **source}
+                options = dict(sources.get(args.source, {}).get("browser_options", {}))
+                if args.options:
+                    supplied = json.loads(args.options.read_text())
+                    if not isinstance(supplied, dict):
+                        raise ValueError("Browser options must be a JSON object")
+                    options.update(supplied)
+                print(extraction_script(args.source, args.recipe, args.search_url, options))
         elif args.command == "sources":
             config = load_config(store.workspace)
             from .sources import source_catalog

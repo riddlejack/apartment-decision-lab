@@ -17,7 +17,7 @@ wheels = [
 
 [[package]]
 name = "apartment-decision-lab"
-version = "0.2.0"
+version = "0.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "tzdata", marker = "sys_platform == 'win32'" },

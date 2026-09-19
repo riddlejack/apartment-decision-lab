@@ -8,7 +8,7 @@ This is declared-source coverage, not every apartment in Chicago. A successful s
 
 `housing.sources.source_catalog(city)` returns runnable, optional, and known assisted sources. `default_sources(city, search)` returns enabled runnable sources with the household search overlaid. Every catalog entry has `id`, `adapter`, `enabled`, `permission_note`, `catalog_source: true`, `max_pages`, `max_listings`, and `search`; direct HTTP entries also have `url`.
 
-Chicago's disabled entries make known gaps visible: HomeHarvest/Realtor is optional; RentCafe, Domu, Entrata, Apartments.com, Zillow, Apartment List, and Compass need source-specific or user-assisted work. Baird & Warner's AppFolio host and SabbaticalHomes are disabled because current ordinary-request probes stop at a robots redirect and human-verification response respectively. No CAPTCHA, proxy, private API, login, or access-control bypass is attempted.
+Chicago's disabled entries make known gaps visible: HomeHarvest/Realtor is optional, and browser recipes cover public rendered cards for RentCafe, Domu, Apartments.com, Zillow, Apartment List, and Compass. These `assisted` sources return `unimplemented` from the HTTP collector, which means no ordinary HTTP adapter exists; it is distinct from a live `blocked` response. Baird & Warner's retired AppFolio tenant is no longer canonical inventory; its first-party vacancies page embeds a public Boom result surface with a tested generic browser configuration, mixed Chicago-area geography, and manual pagination. SabbaticalHomes currently returns human verification to ordinary requests. No CAPTCHA, proxy, private API, login, or access-control bypass is attempted. See [browser-assisted collection](BROWSER-COLLECTION.md).
 
 An unknown city returns a generic disabled catalog with optional HomeHarvest and source-discovery guidance. Its defaults are empty, so custom sources still work and the application does not pretend to provide national coverage.
 
@@ -40,7 +40,7 @@ Unknown facts remain `null`. Search filters reject only known mismatches, so an 
 
 One retry is allowed for connection errors and transient `408`/`5xx` responses, within `max_requests`. `resume_url` may restart an interrupted traversal and must stay on the configured host. Completed records survive a later page failure and return `status: partial`, `partial: true`, errors, and a resume URL when available. Reaching a page, listing, or request cap also sets `partial: true`. No failed or partial run retires stored inventory.
 
-Every result contains `status`, `listings`, `requests`, `partial`, `message`, `errors`, and concise `coverage` counts for pages, records, duplicates, filtered known mismatches, and known/unknown key fields.
+Every result contains `status`, `listings`, `requests`, `partial`, `message`, `errors`, and concise `coverage` counts for pages, records, duplicates, filtered known mismatches, and known/unknown key fields. `success` and explicit `empty` are observed HTTP outcomes; `partial` retains bounded results, `blocked` records an encountered access boundary, and `unimplemented` identifies a declared source without an HTTP adapter.
 
 The optional HomeHarvest adapter invokes sequential rental search with `extra_property_data=false` and a listing limit. It intentionally omits provider-side square-foot filters to retain unknown square footage. HomeHarvest does not expose its underlying HTTP request count, so `requests` is `null` rather than guessed. In a checkout, install it with `uv sync --extra collect`. For a tool installation:
 

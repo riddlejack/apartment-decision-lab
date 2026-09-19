@@ -2,10 +2,11 @@
 
 Room & Route helps roommates find apartments across sources and compare rent, space, and commutes. Chicago is the first supported source catalog. The demo stays frozen; users refresh their own searches.
 
-## In v0.2
+## Current v0.3 status
 
-- Search intake, reusable collectors, saved requirements, and command-line or in-app refresh.
+- Search intake, reusable HTTP collectors, saved requirements, and command-line or in-app refresh.
 - A Chicago source catalog with runnable sources and visible assisted/blocked gaps. Other cities can use custom source URLs and the same adapters.
+- Browser-assisted batch capture, validated imports, a private coverage ledger, and resume points for public rendered pages. One bounded live pass imported 162 source-scoped records: RentCafe 22 unique records from 25 cards, Apartments.com 40, Compass 41, Domu 18, Zillow 9, Apartment List 20, and Baird's Boom embed 12. The UI saved seven resume points and classified 105 records as matching or needing review under example filters of 3 bedrooms, 2 bathrooms, and $4,200 maximum rent. These are records across sources, not unique apartments or city coverage; Zillow was explicitly lazy-load partial.
 - Rent, beds, baths, square footage, availability, pets/parking, known costs, map, shortlist and private notes.
 - Source-scoped listing history, price changes, conservative duplicate suggestions, CSV/JSON exports.
 - Optional local multimodal commute calculations; separate outbound/return scenarios, per-person caps and weekly household comparison.
@@ -15,7 +16,7 @@ See [collection](COLLECTION.md) for the tested source set and [routing](ROUTING.
 
 ## Still open
 
-1. **Broader reliable coverage.** Add sources only when they contribute relevant units. Some major portals need assisted review; a bounded crawl is not a completeness guarantee. Compare an optional provider against the same criteria and capture period before paying for it.
+1. **Broader reliable coverage.** Browser recipes require an agent or user-controlled browser and do not guarantee token-free refresh. Baird's verified generic extraction reports numeric rent, beds, baths, and square feet, but its results mix Chicago-area cities and need explicit geography review plus manual pagination. POST Chicago's Entrata floorplans are accessible rather than blocked, but the page repeats carousel floorplans, mixes per-bed coliving ranges such as `$1,414 to $1,939` with separate full-unit offers, and lacks a verified recipe that preserves price scope and availability grain. SabbaticalHomes still returns human verification to ordinary requests. HomeHarvest/Realtor remains optional and subject to upstream access failure, not proven incremental coverage.
 2. **Another city's verified catalog.** Adapters are reusable; a new city's source selection, geography and transit inputs still need validation. No nationwide coverage claim.
 3. **Typical traffic-aware driving.** R5 driving is uncongested. Free Chicago traffic observations have road, date and licensing gaps; no blanket multiplier or false rush-hour estimate. Paid providers remain optional candidates, not a requirement or an activated service.
 4. **Arrival deadlines and richer time sampling.** Current times are departure scenarios. A departure-time route is not an arrival-by guarantee. Transit estimates use schedules, not measured reliability.
@@ -30,7 +31,7 @@ The Chicago download command retrieved a roughly 102 MB OSM extract and current 
 
 ## Keep it small
 
-Routine refresh must run without LLM calls. Agents discover sources and fix exceptions; they should not browse every listing on every run. Validate changes with focused offline tests, a small live adapter sample when needed, and an installed-app check. Do not refresh the whole city merely to test software.
+Routine HTTP refresh runs without LLM calls. Browser-assisted refresh is targeted gap work and requires an agent or user browser; it has no token-free guarantee. Resume saved pages instead of browsing every listing on every run. Validate changes with focused offline tests, a small live adapter sample when needed, and an installed-app check. Do not refresh the whole city merely to test software.
 
 Defer hosting, accounts, shared-car coordination, live navigation, tours, social/crime scoring, and always-on scheduling. Users can schedule `housing refresh` themselves. Profile R5 before considering a Rust rewrite: Python currently coordinates a Java routing engine.
 

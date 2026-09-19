@@ -256,7 +256,7 @@ class CollectionTests(unittest.TestCase):
         self.assertEqual(result["requests"], 1)
         self.assertEqual(fetch.call_count, 1)
 
-    def test_success_is_one_page_and_reports_unhandled_pagination(self) -> None:
+    def test_page_cap_returns_partial_status_and_resume_url(self) -> None:
         page = APPFOLIO_HTML.replace("</body>", '<a rel="next" href="?page=2">Next</a></body>')
         responses = [
             fetched(200, "https://sample.appfolio.com/robots.txt", "User-agent: *\nAllow: /\n", "text/plain"),
@@ -264,12 +264,84 @@ class CollectionTests(unittest.TestCase):
         ]
         with patch.object(collectors, "_fetch_url", side_effect=responses) as fetch:
             result = collectors.collect_source(self.SOURCE)
-        self.assertEqual(result["status"], "success")
+        self.assertEqual(result["status"], "partial")
         self.assertEqual(result["requests"], 2)
         self.assertEqual(len(result["listings"]), 2)
         self.assertTrue(result["partial"])
         self.assertIn("pagination", result["message"])
+        self.assertEqual(result["resume_url"], "https://sample.appfolio.com/listings/listings?page=2")
         self.assertEqual(fetch.call_count, 2, "robots plus exactly one listings page")
+
+    def test_exact_listing_cap_is_complete_without_more_records_or_pages(self) -> None:
+        source = {**self.SOURCE, "max_listings": 2}
+        responses = [
+            fetched(200, "https://sample.appfolio.com/robots.txt", "User-agent: *\nAllow: /\n", "text/plain"),
+            fetched(200, self.SOURCE["url"], APPFOLIO_HTML),
+        ]
+        with patch.object(collectors, "_fetch_url", side_effect=responses):
+            result = collectors.collect_source(source)
+        self.assertEqual(result["status"], "success")
+        self.assertFalse(result["partial"])
+        self.assertNotIn("resume_url", result)
+
+    def test_listing_cap_truncation_is_partial_without_unsafe_resume(self) -> None:
+        source = {**self.SOURCE, "max_listings": 1}
+        responses = [
+            fetched(200, "https://sample.appfolio.com/robots.txt", "User-agent: *\nAllow: /\n", "text/plain"),
+            fetched(200, self.SOURCE["url"], APPFOLIO_HTML),
+        ]
+        with patch.object(collectors, "_fetch_url", side_effect=responses):
+            result = collectors.collect_source(source)
+        self.assertEqual(result["status"], "partial")
+        self.assertTrue(result["partial"])
+        self.assertEqual(len(result["listings"]), 1)
+        self.assertNotIn("resume_url", result)
+
+    def test_exact_listing_cap_with_next_page_is_partial(self) -> None:
+        source = {**self.SOURCE, "max_pages": 3, "max_listings": 2, "max_requests": 5}
+        page = APPFOLIO_HTML.replace("</body>", '<a rel="next" href="?page=2">Next</a></body>')
+        responses = [
+            fetched(200, "https://sample.appfolio.com/robots.txt", "User-agent: *\nAllow: /\n", "text/plain"),
+            fetched(200, self.SOURCE["url"], page),
+        ]
+        with patch.object(collectors, "_fetch_url", side_effect=responses):
+            result = collectors.collect_source(source)
+        self.assertEqual(result["status"], "partial")
+        self.assertTrue(result["partial"])
+        self.assertEqual(result["resume_url"], "https://sample.appfolio.com/listings/listings?page=2")
+
+    def test_listing_cap_stays_partial_when_collected_row_is_filtered(self) -> None:
+        source = {
+            "id": "filtered-cap", "adapter": "json", "url": "https://feed.example/listings",
+            "enabled": True, "permission_note": "Public test feed", "max_listings": 1,
+            "search": {"max_rent": 1000},
+        }
+        payload = json.dumps({"listings": [{"id": "high-1", "rent": 2000}, {"id": "high-2", "rent": 2200}]})
+        responses = [
+            fetched(200, "https://feed.example/robots.txt", "User-agent: *\nAllow: /\n", "text/plain"),
+            fetched(200, source["url"], payload, "application/json"),
+        ]
+        with patch.object(collectors, "_fetch_url", side_effect=responses):
+            result = collectors.collect_source(source)
+        self.assertEqual(result["status"], "partial")
+        self.assertTrue(result["partial"])
+        self.assertEqual(result["listings"], [])
+        self.assertEqual(result["coverage"]["filtered_known_mismatches"], 1)
+
+    def test_assisted_source_is_unimplemented_not_access_blocked(self) -> None:
+        source = {
+            "id": "assisted-example",
+            "adapter": "assisted",
+            "url": "https://example.test/listings",
+            "enabled": True,
+            "permission_note": "Public result surface needs an adapter.",
+            "assisted_reason": "No ordinary HTTP parser is implemented for this result surface.",
+        }
+        with patch.object(collectors, "_fetch_url") as fetch:
+            result = collectors.collect_source(source)
+        self.assertEqual(result["status"], "unimplemented")
+        self.assertEqual(result["requests"], 0)
+        fetch.assert_not_called()
 
     def test_explicit_empty_is_distinct_from_changed_markup(self) -> None:
         robots = fetched(200, "https://sample.managebuilding.com/robots.txt", "User-agent: *\nAllow: /\n", "text/plain")

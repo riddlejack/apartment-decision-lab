@@ -323,3 +323,9 @@ footer p { margin: 2px 0; }
 }
 
 [hidden] { display: none !important; }
+
+.assisted-panel { margin: 0 0 2rem; padding: 1rem 1.25rem; border: 1px solid var(--line, #dedbd3); border-radius: 12px; }
+.assisted-panel summary { cursor: pointer; font-weight: 650; }
+.assisted-panel p { max-width: 85ch; line-height: 1.5; }
+.assisted-panel li { margin: .55rem 0; }
+.assisted-panel a { color: inherit; text-underline-offset: 3px; }

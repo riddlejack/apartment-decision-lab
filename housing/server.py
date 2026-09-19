@@ -49,6 +49,9 @@ class Handler(BaseHTTPRequestHandler):
                 self.send(200, state(self.store))
             elif path == "/api/export.csv":
                 self.send(200, export_csv(self.store.listings()), "text/csv")
+            elif path == "/api/collection-plan":
+                from .assisted import plan
+                self.send(200, plan(self.store))
             else:
                 assets = {"/": ("index.html", "text/html"), "/index.html": ("index.html", "text/html"),
                           "/app.js": ("app.js", "text/javascript"), "/style.css": ("style.css", "text/css")}
@@ -88,6 +91,9 @@ class Handler(BaseHTTPRequestHandler):
                     if not isinstance(body, dict) or not isinstance(body.get("listings"), list):
                         raise ValueError("Expected {listings: [...]}")
                     self.send(200, self.store.import_rows(body["listings"]))
+                elif self.path == "/api/assisted-import":
+                    from .assisted import ingest
+                    self.send(200, ingest(self.store, body))
                 elif self.path == "/api/routes":
                     self.send(200, route(self.store))
                 elif self.path == "/api/collect":
