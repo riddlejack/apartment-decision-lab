@@ -2,7 +2,7 @@
 
 **Scrape ~every apartment listing in your city. Filter listings by any characteristic (commute time, rent, sqft, # of bathrooms, etc.)**
 
-Built this while apartment hunting in Chicago. Manual browsing was slow, & every apartment had trade-offs (too expensive, too few bathrooms, long commute, etc.). Built scripts to scrape ~every apt listing in Chicago, built an algorithm to calculate each roommate's commute to work. 
+Built this while apartment hunting in Chicago. Manual browsing was slow, & every apartment had trade-offs (too expensive, too few bathrooms, long commute, etc.). Built scripts to scrape ~every apt listing in Chicago, calculate each roommates commute to work, and filter the results.  
 
 This repo turns that work into tools other people can use.
 
