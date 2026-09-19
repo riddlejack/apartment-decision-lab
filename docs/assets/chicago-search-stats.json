@@ -1,0 +1,46 @@
+{
+  "period": "July 2026 original Chicago search",
+  "verified_on": "2026-09-19",
+  "listing_captures": 32242,
+  "consolidated_listing_records": 16581,
+  "broad_candidate_screen_records": 2930,
+  "commute_origins": 7013,
+  "weekly_departure_slots": 672,
+  "departure_resolution_minutes": 15,
+  "reported_outcome": {
+    "currency": "USD",
+    "monthly_rent_per_person_approx": 1230,
+    "earlier_options_monthly_rent_per_person_approx": 2000,
+    "bathrooms": 4,
+    "basis": "Author report, with per-person basis confirmed; not a controlled savings benchmark."
+  },
+  "definitions": {
+    "listing_captures": "Captured occurrences, including repeat searches and syndicated listings.",
+    "consolidated_listing_records": "Canonical records; unresolved identities remain, so this is not a count of proven unique physical apartments.",
+    "broad_candidate_screen_records": "Historical export: advertised 4+ bedrooms, 2+ full bathrooms, rent <=7500, excluding classifications containing reject, not_eligible or ambiguous_bed_count. Records still needed verification. This historical screen is not the current missing-data policy.",
+    "commute_origins": "Locations submitted to the historical commute model; route availability differs by mode.",
+    "weekly_departure_slots": "Quarter-hour departure slots across a representative week, with equivalent transit service days reused. Not distinct route computations or measured trips."
+  },
+  "evidence": [
+    {
+      "file": "phase2/exports/raw_listing_occurrences.csv",
+      "rows": 32242,
+      "sha256": "6db70ace7c844eb6e2d90dc29f45d0a114334ddee06d4487150d0bfdee58c7c8"
+    },
+    {
+      "file": "outputs/019f6677-a470-74d3-a1fd-a28a538c321c/all_unique_listings.csv",
+      "rows": 16581,
+      "sha256": "715907fe132b227c36aedfa765440f3c9bab23fa3cf2d0e13abf767d23b1cca1"
+    },
+    {
+      "file": "outputs/019f6677-a470-74d3-a1fd-a28a538c321c/all_relevant_listings.csv",
+      "rows": 2930,
+      "sha256": "64f7379ac4dc2d244778e4c9056793bf7205faf28938acf9084be12ee69ea701"
+    },
+    {
+      "file": "roommate-shortlist-site/public/commutes/manifest.json",
+      "sha256": "1f97142c5b85a7f993cd08f7e1b63b529d1bdd779c775f77a420758a53337ba9"
+    }
+  ],
+  "privacy": "Aggregate values only. Original evidence files, addresses and household destinations remain private."
+}

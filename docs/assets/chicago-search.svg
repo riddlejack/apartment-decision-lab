@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="936pt" height="460.8pt" viewBox="0 0 936 460.8" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-09-19T13:30:07.271337</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 460.8 
+L 936 460.8 
+L 936 0 
+L 0 0 
+z
+" style="fill: #f7f4ed"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 45.864 235.9296 
+L 291.096 235.9296 
+Q 306.072 235.9296 306.072 228.5568 
+L 306.072 100.9152 
+Q 306.072 93.5424 291.096 93.5424 
+L 45.864 93.5424 
+Q 30.888 93.5424 30.888 100.9152 
+L 30.888 228.5568 
+Q 30.888 235.9296 45.864 235.9296 
+z
+" clip-path="url(#p3621e54953)" style="fill: #ffffff; stroke: #dcded5; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 345.384 235.9296 
+L 590.616 235.9296 
+Q 605.592 235.9296 605.592 228.5568 
+L 605.592 100.9152 
+Q 605.592 93.5424 590.616 93.5424 
+L 345.384 93.5424 
+Q 330.408 93.5424 330.408 100.9152 
+L 330.408 228.5568 
+Q 330.408 235.9296 345.384 235.9296 
+z
+" clip-path="url(#p3621e54953)" style="fill: #ffffff; stroke: #dcded5; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 644.904 235.9296 
+L 890.136 235.9296 
+Q 905.112 235.9296 905.112 228.5568 
+L 905.112 100.9152 
+Q 905.112 93.5424 890.136 93.5424 
+L 644.904 93.5424 
+Q 629.928 93.5424 629.928 100.9152 
+L 629.928 228.5568 
+Q 629.928 235.9296 644.904 235.9296 
+z
+" clip-path="url(#p3621e54953)" style="fill: #ffffff; stroke: #dcded5; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 45.864 367.2576 
+L 890.136 367.2576 
+Q 905.112 367.2576 905.112 359.8848 
+L 905.112 271.4112 
+Q 905.112 264.0384 890.136 264.0384 
+L 45.864 264.0384 
+Q 30.888 264.0384 30.888 271.4112 
+L 30.888 359.8848 
+Q 30.888 367.2576 45.864 367.2576 
+z
+" clip-path="url(#p3621e54953)" style="fill: #1d322a; stroke: #1d322a; stroke-linejoin: miter"/>
+   </g>
+   <g id="line2d_1">
+    <path d="M 461.448 345.6 
+L 461.448 285.696 
+" clip-path="url(#p3621e54953)" style="fill: none; stroke: #637567; stroke-linecap: square"/>
+   </g>
+   <g id="text_1">
+    <text style="font-weight: 700; font-size: 25px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1d322a" x="42.12" y="36.864" transform="rotate(-0 42.12 36.864)">A wider search. A better place.</text>
+   </g>
+   <g id="text_2">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #59675e" x="42.12" y="62.208" transform="rotate(-0 42.12 62.208)">CHICAGO  /  JULY 2026  /  ORIGINAL SEARCH</text>
+   </g>
+   <g id="text_3">
+    <text style="font-weight: 700; font-size: 33px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1d322a" x="56.16" y="147.9168" transform="rotate(-0 56.16 147.9168)">32,242</text>
+   </g>
+   <g id="text_4">
+    <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1d322a" x="56.16" y="180.6336" transform="rotate(-0 56.16 180.6336)">listing captures</text>
+   </g>
+   <g id="text_5">
+    <text style="font-size: 9.3px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #59675e" x="56.16" y="207.36" transform="rotate(-0 56.16 207.36)">Across searches and sources</text>
+   </g>
+   <g id="text_6">
+    <text style="font-weight: 700; font-size: 33px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1d322a" x="355.68" y="147.9168" transform="rotate(-0 355.68 147.9168)">16,581</text>
+   </g>
+   <g id="text_7">
+    <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1d322a" x="355.68" y="180.6336" transform="rotate(-0 355.68 180.6336)">listing records</text>
+   </g>
+   <g id="text_8">
+    <text style="font-size: 9.3px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #59675e" x="355.68" y="207.36" transform="rotate(-0 355.68 207.36)">Repeat captures consolidated</text>
+   </g>
+   <g id="text_9">
+    <text style="font-weight: 700; font-size: 33px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1d322a" x="655.2" y="147.9168" transform="rotate(-0 655.2 147.9168)">2,930</text>
+   </g>
+   <g id="text_10">
+    <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #1d322a" x="655.2" y="180.6336" transform="rotate(-0 655.2 180.6336)">records to review</text>
+   </g>
+   <g id="text_11">
+    <text style="font-size: 9.3px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #59675e" x="655.2" y="207.36" transform="rotate(-0 655.2 207.36)">Broad rent, bedroom and bath screen</text>
+   </g>
+   <g id="patch_6">
+    <path d="M 301.519969 167.7312 
+Q 314.494529 167.7312 325.568432 167.7312 
+" style="fill: none; stroke: #59675e; stroke-width: 1.7; stroke-linecap: round"/>
+    <path d="M 321.568432 165.7312 
+L 325.568432 167.7312 
+L 321.568432 169.7312 
+" style="fill: none; stroke: #59675e; stroke-width: 1.7; stroke-linecap: round"/>
+   </g>
+   <g id="patch_7">
+    <path d="M 601.039969 167.7312 
+Q 614.014529 167.7312 625.088432 167.7312 
+" style="fill: none; stroke: #59675e; stroke-width: 1.7; stroke-linecap: round"/>
+    <path d="M 621.088432 165.7312 
+L 625.088432 167.7312 
+L 621.088432 169.7312 
+" style="fill: none; stroke: #59675e; stroke-width: 1.7; stroke-linecap: round"/>
+   </g>
+   <g id="text_12">
+    <text style="font-weight: 700; font-size: 22px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #ffffff" x="60.84" y="301.824" transform="rotate(-0 60.84 301.824)">7,013 locations</text>
+   </g>
+   <g id="text_13">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #dce3d5" x="60.84" y="337.3056" transform="rotate(-0 60.84 337.3056)">Modeled for roommate commutes</text>
+   </g>
+   <g id="text_14">
+    <text style="font-weight: 700; font-size: 22px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #a5cc58" x="496.08" y="301.824" transform="rotate(-0 496.08 301.824)">672 departure slots</text>
+   </g>
+   <g id="text_15">
+    <text style="font-size: 10.8px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #dce3d5" x="496.08" y="337.3056" transform="rotate(-0 496.08 337.3056)">Every 15 minutes across a representative week</text>
+   </g>
+   <g id="text_16">
+    <text style="font-size: 9.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #59675e" x="42.12" y="399.9744" transform="rotate(-0 42.12 399.9744)">Historical records, not a count of unique available apartments. Candidates still needed verification.</text>
+   </g>
+   <g id="text_17">
+    <text style="font-size: 9.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #59675e" x="42.12" y="419.328" transform="rotate(-0 42.12 419.328)">The original search used Codex plus custom scripts; this repo packages the reusable workflow.</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p3621e54953">
+   <rect x="0" y="0" width="936" height="460.8"/>
+  </clipPath>
+ </defs>
+</svg>
