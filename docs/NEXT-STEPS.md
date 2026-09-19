@@ -1,6 +1,6 @@
 # Scope and remaining work
 
-Room & Route helps roommates find apartments across sources and compare rent, space, and commutes. Chicago is the first supported source catalog. The demo stays frozen; users refresh their own searches.
+Goldblum helps roommates find apartments across sources and compare rent, space, and commutes. Chicago is the first supported source catalog. The demo stays frozen; users refresh their own searches.
 
 ## Current v0.3 status
 
@@ -33,6 +33,6 @@ The Chicago download command retrieved a roughly 102 MB OSM extract and current 
 
 Routine HTTP refresh runs without LLM calls. Browser-assisted refresh is targeted gap work and requires an agent or user browser; it has no token-free guarantee. Resume saved pages instead of browsing every listing on every run. Validate changes with focused offline tests, a small live adapter sample when needed, and an installed-app check. Do not refresh the whole city merely to test software.
 
-Defer hosting, accounts, shared-car coordination, live navigation, tours, social/crime scoring, and always-on scheduling. Users can schedule `housing refresh` themselves. Profile R5 before considering a Rust rewrite: Python currently coordinates a Java routing engine.
+Defer hosting, accounts, shared-car coordination, live navigation, tours, social/crime scoring, and always-on scheduling. Users can schedule `goldblum refresh` themselves. Profile R5 before considering a Rust rewrite: Python currently coordinates a Java routing engine.
 
 [Competitor and backend research](FEATURE-RESEARCH.md) records the evidence behind these choices.

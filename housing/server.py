@@ -125,7 +125,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def serve(store, port):
     server = ThreadingHTTPServer(("127.0.0.1", port), partial(Handler, store=store, lock=threading.Lock()))
-    print(f"Room & Route: http://127.0.0.1:{server.server_port} (Ctrl-C to stop)", flush=True)
+    print(f"Goldblum: http://127.0.0.1:{server.server_port} (Ctrl-C to stop)", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

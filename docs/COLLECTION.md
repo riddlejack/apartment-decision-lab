@@ -45,10 +45,10 @@ Every result contains `status`, `listings`, `requests`, `partial`, `message`, `e
 The optional HomeHarvest adapter invokes sequential rental search with `extra_property_data=false` and a listing limit. It intentionally omits provider-side square-foot filters to retain unknown square footage. HomeHarvest does not expose its underlying HTTP request count, so `requests` is `null` rather than guessed. In a checkout, install it with `uv sync --extra collect`. For a tool installation:
 
 ```sh
-uv tool install --force --with homeharvest==0.8.18 git+https://github.com/riddlejack/apartment-decision-lab
+uv tool install --force --with homeharvest==0.8.18 git+https://github.com/riddlejack/goldblum
 ```
 
-Copy the `realtor-homeharvest` entry from `housing sources catalog` into your workspace's `config.json` sources and set `enabled` to `true`. Set `search.location` to the desired city, keep a small `max_listings` while checking it, and run `housing collect --source realtor-homeharvest`. The extra is optional; default sources do not require it.
+Copy the `realtor-homeharvest` entry from `goldblum sources catalog` into your workspace's `config.json` sources and set `enabled` to `true`. Set `search.location` to the desired city, keep a small `max_listings` while checking it, and run `goldblum collect --source realtor-homeharvest`. The extra is optional; default sources do not require it.
 
 ## Evidence and grain
 

@@ -16,6 +16,30 @@ def test_agent_skills_do_not_drift_between_clients():
         assert source.read_bytes() == (root / ".claude/skills" / source.parent.name / "SKILL.md").read_bytes()
 
 
+def test_default_workspace_preserves_legacy_search_and_prefers_initialized_goldblum(tmp_path, monkeypatch):
+    from housing.cli import main
+    from housing.config import load_config, save_config
+    monkeypatch.chdir(tmp_path)
+    assert main(["--workspace", ".housing", "init"]) == 0
+    config = load_config(tmp_path / ".housing")
+    config["city"] = "Legacy city"
+    save_config(tmp_path / ".housing", config)
+    assert main(["status"]) == 0
+    assert not (tmp_path / ".goldblum").exists()
+    assert load_config(tmp_path / ".housing")["city"] == "Legacy city"
+    assert main(["--workspace", ".goldblum", "init"]) == 0
+    from housing.cli import default_workspace
+    assert default_workspace() == Path(".goldblum")
+
+
+def test_fresh_default_workspace_uses_goldblum(tmp_path, monkeypatch):
+    from housing.cli import main
+    monkeypatch.chdir(tmp_path)
+    assert main(["init"]) == 0
+    assert (tmp_path / ".goldblum" / "config.json").is_file()
+    assert not (tmp_path / ".housing").exists()
+
+
 def test_bundled_routes_match_demo_and_reject_destination_changes():
     from housing.routing import rank_listings, routes_match
     from housing.store import validate_listing

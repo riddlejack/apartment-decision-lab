@@ -17,7 +17,7 @@ BENCHMARK = "Public_AR_Current"
 ENDPOINT = "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress"
 TIMEOUT_SECONDS = 20
 MAX_RESPONSE_BYTES = 1024 * 1024
-USER_AGENT = "apartment-decision-lab/0.1 (explicit local geocode)"
+USER_AGENT = "goldblum/0.1 (explicit local geocode)"
 
 
 def _now() -> datetime:

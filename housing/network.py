@@ -31,7 +31,7 @@ class FeedLinks(HTMLParser):
 
 
 def _request(url):
-    return urlopen(Request(url, headers={"User-Agent": "RoomAndRoute/0.2 (public routing data download)"}), timeout=90)
+    return urlopen(Request(url, headers={"User-Agent": "Goldblum/0.4 (public routing data download)"}), timeout=90)
 
 
 def _download(url, target, max_bytes=300 * 1024 * 1024):

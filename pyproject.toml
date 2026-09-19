@@ -3,9 +3,9 @@ requires = ["hatchling>=1.27,<2"]
 build-backend = "hatchling.build"
 
 [project]
-name = "apartment-decision-lab"
-version = "0.3.0"
-description = "Room & Route: find apartments and compare roommate commutes"
+name = "goldblum"
+version = "0.4.0"
+description = "Goldblum: find apartments and compare roommate commutes"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
@@ -16,10 +16,11 @@ dependencies = ["tzdata>=2025.1; sys_platform == 'win32'"]
 collect = ["homeharvest==0.8.18"]
 
 [project.scripts]
+goldblum = "housing.cli:main"
 housing = "housing.cli:main"
 
 [project.urls]
-Repository = "https://github.com/riddlejack/apartment-decision-lab"
+Repository = "https://github.com/riddlejack/goldblum"
 
 [tool.hatch.build.targets.wheel]
 packages = ["housing"]

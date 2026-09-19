@@ -85,7 +85,7 @@ def validate_config(config):
 def load_config(workspace):
     path = Path(workspace) / "config.json"
     if not path.exists():
-        raise ValueError("Workspace is not initialized. Run housing init or housing demo first")
+        raise ValueError("Workspace is not initialized. Run goldblum init or goldblum demo first")
     return validate_config(json.loads(path.read_text()))
 
 

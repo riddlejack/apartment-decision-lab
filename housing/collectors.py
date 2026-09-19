@@ -19,7 +19,7 @@ from urllib import error, request, robotparser
 from urllib.parse import parse_qsl, unquote, urlencode, urljoin, urlsplit, urlunsplit
 
 
-USER_AGENT = "housing-decision-lab/0.1 (local personal-use collector)"
+USER_AGENT = "goldblum/0.1 (local personal-use collector)"
 MAX_PAGE_BYTES = 5 * 1024 * 1024
 MAX_PAGES = 10
 MAX_LISTINGS = 5_000

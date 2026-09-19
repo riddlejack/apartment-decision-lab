@@ -29,7 +29,7 @@ def state(store):
         if routes_match(listings, config, routes):
             rankings = rank_listings(listings, config.get("people", []), routes)
         else:
-            routes = {"results": [], "status": "stale", "message": "Origins or routing configuration changed. Run housing route again."}
+            routes = {"results": [], "status": "stale", "message": "Origins or routing configuration changed. Run goldblum route again."}
     from .search import assess, summarize
     for listing in listings:
         listing["search"] = assess(listing, config.get("search", {}))
@@ -122,14 +122,23 @@ def collect(store, only=None):
             imported = {"observations_added": 0}
         store.record_run(source["id"], result)
         summaries.append({"source": source["id"], **{k: v for k, v in result.items() if k != "listings"}, **imported})
-    no_sources = "No enabled sources. See https://github.com/riddlejack/apartment-decision-lab/blob/main/docs/COLLECTION.md."
+    no_sources = "No enabled sources. See https://github.com/riddlejack/goldblum/blob/main/docs/COLLECTION.md."
     return {"sources": summaries, "message": no_sources if not summaries else "Previous inventory is retained, including after failed or partial runs."}
 
 
+def default_workspace():
+    """Prefer Goldblum, while keeping existing searches usable without a move."""
+    current = Path(".goldblum")
+    legacy = Path(".housing")
+    if not (current / "config.json").exists() and (legacy / "config.json").exists():
+        return legacy
+    return current
+
+
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Room & Route: find apartments and compare roommate commutes")
+    parser = argparse.ArgumentParser(description="Goldblum: find apartments and compare roommate commutes")
     parser.add_argument("--version", action="version", version=__version__)
-    parser.add_argument("--workspace", type=Path, default=Path(".housing"), help="private data directory (default .housing)")
+    parser.add_argument("--workspace", type=Path, default=default_workspace(), help="private data directory (default .goldblum; existing .housing reused)")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("init", help="create an empty private workspace")
     sub.add_parser("demo", help="initialize synthetic listings and an example household")
@@ -187,7 +196,7 @@ def main(argv=None):
             print_json({"version": __version__, "python": sys.version.split()[0], "workspace": str(args.workspace.resolve()),
                         "initialized": (args.workspace / "config.json").exists(),
                         "routing": {"Rscript": bool(shutil.which("Rscript")), "java": bool(shutil.which("java")),
-                                    "note": "Optional. See https://github.com/riddlejack/apartment-decision-lab/blob/main/docs/ROUTING.md; executable presence is not engine validation."},
+                                    "note": "Optional. See https://github.com/riddlejack/goldblum/blob/main/docs/ROUTING.md; executable presence is not engine validation."},
                         "core": "No Node, Java, R, API key or LLM needed for import, comparison and export."})
             return 0
         workspace = args.workspace.expanduser().resolve()
@@ -220,7 +229,7 @@ def main(argv=None):
             else:
                 save_config(store.workspace, default_config())
                 summary = {"listings": 0}
-            print_json({"workspace": str(store.workspace), **summary, "next": "housing review (with the same --workspace, if customized)"})
+            print_json({"workspace": str(store.workspace), **summary, "next": "goldblum review (with the same --workspace, if customized)"})
         elif args.command == "import":
             load_config(store.workspace)
             print_json(store.import_rows(read_listings(args.path)))

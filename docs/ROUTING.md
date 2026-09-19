@@ -1,6 +1,6 @@
 # Local routing
 
-Room & Route routes locally with [R5 through r5r](https://ipeagit.github.io/r5r/). The Python package handles configuration, bounded work, caching, unavailable values, and household ranking. The bundled R runner supplies the actual OSM street paths and GTFS schedule calculations. There is no straight-line transit fallback and no LLM dependency.
+Goldblum routes locally with [R5 through r5r](https://ipeagit.github.io/r5r/). The Python package handles configuration, bounded work, caching, unavailable values, and household ranking. The bundled R runner supplies the actual OSM street paths and GTFS schedule calculations. There is no straight-line transit fallback and no LLM dependency.
 
 Routing is optional. Viewing, importing, and ranking saved results do not require R or Java. Computing new routes requires:
 
@@ -15,14 +15,14 @@ The [official r5r introduction](https://ipeagit.github.io/r5r/articles/r5r.html)
 ```sh
 brew install r openjdk@21
 Rscript -e 'install.packages(c("r5r", "data.table"), repos="https://cloud.r-project.org")'
-housing doctor
+goldblum doctor
 ```
 
 For Chicago, preview the public downloads, then fetch the street extract and CTA, Metra and Pace schedules:
 
 ```sh
-housing network
-housing network --download --city Chicago
+goldblum network
+goldblum network --download --city Chicago
 ```
 
 This configures the network directory and reuses files already downloaded. `--download --refresh` replaces inputs and removes the derived graph so the next route run rebuilds it. The Chicago street extract is city-sized: for suburban commutes, use a larger OSM extract covering **both homes and destinations**. Transit feeds alone do not extend the street network. Pace publishes its feed for noncommercial use; all agency terms remain applicable.
@@ -32,8 +32,8 @@ For another city, place its `.osm.pbf` street extract and agency GTFS ZIP files 
 In the private workspace's `config.json`, set `timezone`, `routing.network_dir`, a `routing.date` inside every feed's service calendar, outbound/return times, resource limits, and each person's coordinates, destinations, and allowed modes. Then run:
 
 ```sh
-housing --workspace my-search route
-housing --workspace my-search compare
+goldblum --workspace my-search route
+goldblum --workspace my-search compare
 ```
 
 The first route command builds `network.dat` from the PBF and GTFS feeds. A fresh regional graph can take substantially longer and use substantially more memory than either small verification run described below. Start with a shortlist through `listing_ids`, a small transit window, one or two threads, and a realistic JVM cap; expand only after that bounded run succeeds. Later calls reuse the graph and request cache when their physical inputs still match. Origins with identical coordinates share matrix work while retaining separate listing records. Adding a listing at a new location computes only that location when the destinations, scenarios and network are unchanged.

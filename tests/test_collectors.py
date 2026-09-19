@@ -208,7 +208,7 @@ class _SyntheticFeedHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802
         type(self).paths.append(self.path)
         if self.path == "/robots.txt":
-            body = b"User-agent: housing-decision-lab\nAllow: /feed.json\n"
+            body = b"User-agent: goldblum\nAllow: /feed.json\n"
             self.send_response(200)
             self.send_header("Content-Type", "text/plain")
         elif self.path == "/feed.json":

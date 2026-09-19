@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
-    <title>Room &amp; Route</title>
+    <title>Goldblum</title>
     <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
     <link rel="stylesheet" href="/style.css">
     <script src="/vendor/leaflet/leaflet.js" defer></script>
@@ -12,9 +12,9 @@
   </head>
   <body>
     <header class="topbar">
-      <a class="brand" href="#search" aria-label="Room and Route home">
+      <a class="brand" href="#search" aria-label="Goldblum home">
         <span class="brand-mark" aria-hidden="true"><span></span><span></span></span>
-        <span>Room &amp; Route</span>
+        <span>Goldblum</span>
       </a>
       <nav class="top-nav" aria-label="Workspace sections">
         <a href="#search">Search</a><a href="#results">Listings</a><a href="#household">Commutes</a>
@@ -32,8 +32,8 @@
         <div class="search-intro">
           <p class="section-number" aria-hidden="true">01</p>
           <div>
-            <h1 id="search-heading">Find a place that works for everyone.</h1>
-            <p>Set the dealbreakers. Room &amp; Route keeps missing facts visible and brings new listings back into one shortlist.</p>
+            <h1 id="search-heading">Life, uh, finds a lease.</h1>
+            <p>Set the dealbreakers. Goldblum keeps missing facts visible and brings new listings back into one shortlist.</p>
           </div>
         </div>
         <form class="intake-panel" id="setup-form">
@@ -71,7 +71,7 @@
       <details class="assisted-panel">
         <summary>Search the remaining sites</summary>
         <p>Automatic collection covers part of the market. Use Codex or Claude Code with this repo’s <strong>collect-browser</strong> skill to search these sites, import batches, and save your place.</p>
-        <p>Start with <code>housing assisted plan</code>. Each link below opens a source or saved resume point. Import browser captures using the JSON import below.</p>
+        <p>Start with <code>goldblum assisted plan</code>. Each link below opens a source or saved resume point. Import browser captures using the JSON import below.</p>
         <ul id="assisted-plan"></ul>
         <a href="/api/collection-plan" download="collection-plan.json">Download collection plan</a>
       </details>
@@ -139,7 +139,7 @@
             </div>
             <div class="people-list" id="people-list"></div>
             <div class="routing-quick">
-              <div class="routing-quick-heading"><div><h3>Route timing</h3><p>Outbound and return are calculated separately.</p></div><code>housing network --download --city Chicago</code></div>
+              <div class="routing-quick-heading"><div><h3>Route timing</h3><p>Outbound and return are calculated separately.</p></div><code>goldblum network --download --city Chicago</code></div>
               <div class="routing-quick-grid">
                 <label class="field"><span>Schedule date</span><input id="route-date-input" type="date"></label>
                 <label class="field"><span>Leave home</span><input id="route-outbound-input" type="time"></label>
@@ -158,6 +158,6 @@
         <details><summary id="tools-heading">Import listings or browser captures</summary><div class="import-panel" id="import-panel" tabindex="-1"><p>Import a listing export or browser capture JSON. Browser captures also save search scope and resume progress.</p><label class="field"><span>Choose JSON</span><input id="json-file-input" type="file" accept="application/json,.json"></label><label class="field json-field"><span>Payload</span><textarea id="import-json" rows="8" spellcheck="false" placeholder='[{"id":"…","source":"…"}]'></textarea></label><div class="panel-footer"><span class="form-status" id="import-status" role="status" aria-live="polite"></span><button class="button button-accent" id="import-button" type="button">Import listings</button></div></div></details>
       </section>
     </main>
-    <footer><p><strong>Room &amp; Route</strong> keeps your search on your computer.</p><p>Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>.</p></footer>
+    <footer><p><strong>Goldblum</strong> keeps your search on your computer.</p><p>Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>.</p></footer>
   </body>
 </html>
